@@ -2,23 +2,15 @@ class Cell {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+
         this.isOpened = false;
         this.neighborMineCount = 0;
         this.hasMine = false;
 
         this.element = document.createElement('td');
         this.element.classList.add('cell');
-        this.element.dataset.x = this.x;
-        this.element.dataset.y = this.y;
-        this.element.dataset.isCell = true;
-    }
-
-    addMine() {
-        this.hasMine = true;
-    }
-
-    setNeighborMineCount(neighborMineCount) {
-        this.neighborMineCount = neighborMineCount;
+        this.element.dataset.x = x;
+        this.element.dataset.y = y;
     }
 
     reveal() {
@@ -46,26 +38,30 @@ class GameField {
         this.width = width;
         this.height = height;
 
-        this.revealedCellCount = 0;
-        this.cells = [];
-        for (let y = 0; y < height; y += 1) {
-            for (let x = 0; x < width; x += 1) {
-                this.cells.push(new Cell(x, y, 0, false));
-            }
-        }
-
         this.element = document.createElement('table');
         this.element.classList.add('game-field');
 
+        this.revealedCellCount = 0;
+        this.cells = [];
         for (let y = 0; y < this.height; y += 1) {
             const rowElement = document.createElement('tr');
             this.element.appendChild(rowElement);
 
             for (let x = 0; x < this.width; x += 1) {
-                const cell = this.cells[y * this.width + x];
+                const cell = new Cell(x, y);
+                this.cells.push(cell);
                 rowElement.appendChild(cell.element);
             }
         }
+
+        this.onCellClick = () => {};
+        this.element.addEventListener('click', (event) => {
+            if (event.target.classList.contains('cell')) {
+                const x = Number.parseInt(event.target.dataset.x);
+                const y = Number.parseInt(event.target.dataset.y);
+                this.onCellClick(this.getCell(x, y));
+            }
+        });
     }
 
     getCell(x, y) {
@@ -91,7 +87,7 @@ class GameField {
         }
 
         for (const mineIndex of mineIndices) {
-            this.cells[mineIndex].addMine();
+            this.cells[mineIndex].hasMine = true;
         }
 
         for (let y = 0; y < this.height; y += 1) {
@@ -99,23 +95,23 @@ class GameField {
                 let neighborMineCount = 0;
                 for (const dy of [-1, 0, 1]) {
                     for (const dx of [-1, 0, 1]) {
-                        if (dx === 0 && dy == 0) {
+                        if (dx === 0 && dy === 0) {
                             continue;
                         }
-                        if (x + dx < 0 || x + dx >= this.width) {
-                            continue;
-                        }
-                        if (y + dy < 0 || y + dy >= this.height) {
+                        if (
+                            x + dx < 0 || x + dx >= this.width ||
+                            y + dy < 0 || y + dy >= this.height
+                        ) {
                             continue;
                         }
 
-                        if (this.cells[(y + dy) * this.width + (x + dx)].hasMine) {
+                        if (this.getCell(x + dx, y + dy).hasMine) {
                             neighborMineCount += 1;
                         }
                     }
                 }
 
-                this.cells[y * this.width + x].setNeighborMineCount(neighborMineCount);
+                this.cells[y * this.width + x].neighborMineCount = neighborMineCount;
             }
         }
     }
@@ -125,7 +121,7 @@ class GameField {
             throw new Error('Cell coordinates out of bounds.');
         }
 
-        const revealedCell = this.cells[y * this.width + x];
+        const revealedCell = this.getCell(x, y);
         if (revealedCell.isOpened) {
             return;
         }
@@ -152,18 +148,17 @@ class GameField {
                 if (nextCell.neighborMineCount === 0) {
                     for (const dx of [-1, 0, 1]) {
                         for (const dy of [-1, 0, 1]) {
-                            if (dx === 0 && dy == 0) {
+                            if (dx === 0 && dy === 0) {
                                 continue;
                             }
-                            if (nextCell.x + dx < 0 || nextCell.x + dx >= this.width) {
+                            if (
+                                nextCell.x + dx < 0 || nextCell.x + dx >= this.width ||
+                                nextCell.y + dy < 0 || nextCell.y + dy >= this.height
+                            ) {
                                 continue;
                             }
-                            if (nextCell.y + dy < 0 || nextCell.y + dy >= this.height) {
-                                continue;
-                            }
-                            const neighbor = this.cells[
-                                (nextCell.y + dy) * this.width + (nextCell.x + dx)
-                            ];
+
+                            const neighbor = this.getCell(nextCell.x + dx, nextCell.y + dy);
                             if (!neighbor.visited && !neighbor.isOpened) {
                                 cellsToVisit.push(neighbor);
                             }
@@ -210,34 +205,27 @@ class Game {
         this.gameStateElement = document.getElementById('game-state');
         this.gameStateElement.textContent = this.state;
 
-        // TODO: Add custom "onclick" event for the game field, instead of handling raw HTML events
-        // right here.
-        this.gameField.element.addEventListener('click', (event) => {
-            if (event.target.dataset.isCell) {
-                if (this.state === GAME_STATE_START) {
-                    this.state = GAME_STATE_IN_PROGRESS;
-                    this.gameStateElement.textContent = this.state;
-                }
+        this.gameField.onCellClick = (cell) => {
+            if (this.state === GAME_STATE_START) {
+                this.state = GAME_STATE_IN_PROGRESS;
+                this.gameStateElement.textContent = this.state;
+            }
 
-                const x = Number.parseInt(event.target.dataset.x);
-                const y = Number.parseInt(event.target.dataset.y);
+            if (!cell.hasMine) {
+                this.gameField.reveal(cell.x, cell.y);
 
-                if (!this.gameField.getCell(x, y).hasMine) {
-                    this.gameField.reveal(x, y);
-
-                    const totalCellCount = this.gameField.width * this.gameField.height;
-                    if (this.gameField.revealedCellCount + this.mineCount === totalCellCount) {
-                        this.state = GAME_STATE_WIN;
-                        this.gameField.revealAll();
-                        this.gameStateElement.textContent = this.state;
-                    }
-                } else {
-                    this.state = GAME_STATE_LOSE;
+                const totalCellCount = this.gameField.width * this.gameField.height;
+                if (this.gameField.revealedCellCount + this.mineCount === totalCellCount) {
+                    this.state = GAME_STATE_WIN;
                     this.gameField.revealAll();
                     this.gameStateElement.textContent = this.state;
                 }
+            } else {
+                this.state = GAME_STATE_LOSE;
+                this.gameField.revealAll();
+                this.gameStateElement.textContent = this.state;
             }
-        });
+        };
     }
 
     reset() {
