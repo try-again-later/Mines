@@ -2,9 +2,10 @@ const CELL_FLAG_MARK = 'CELL_FLAG_MARK';
 const CELL_QUESTION_MARK = 'CELL_QUESTION_MARK';
 
 class Cell {
-    constructor(x, y) {
+    constructor(x, y, game) {
         this.x = x;
         this.y = y;
+        this.game = game;
 
         this.isOpened = false;
         this.neighborMineCount = 0;
@@ -21,9 +22,11 @@ class Cell {
         this.mark = mark;
         switch (mark) {
         case CELL_FLAG_MARK:
+            this.game.setMinesLeft(this.game.minesLeft - 1);
             this.element.textContent = '🚩';
             break;
         case CELL_QUESTION_MARK:
+            this.game.setMinesLeft(this.game.minesLeft + 1);
             this.element.textContent = '?';
             break;
         }
@@ -34,12 +37,20 @@ class Cell {
     }
 
     removeMark() {
+        if (this.mark === CELL_FLAG_MARK) {
+            this.game.setMinesLeft(this.game.minesLeft + 1);
+        }
+
         this.mark = null;
         this.element.textContent = '';
     }
 
     reveal() {
-        if (this.hasMark()) {
+        if (this.hasMine) {
+            if (this.mark !== CELL_FLAG_MARK) {
+                this.game.setMinesLeft(this.game.minesLeft - 1);
+            }
+        } else {
             this.removeMark();
         }
 
@@ -49,6 +60,8 @@ class Cell {
             this.element.textContent = '💣';
         } else if (this.neighborMineCount > 0) {
             this.element.textContent = this.neighborMineCount;
+        } else {
+            this.element.textContent = '';
         }
 
         this.element.classList.add('opened');
@@ -56,10 +69,12 @@ class Cell {
 
     reset() {
         this.element.classList.remove('opened');
+        this.element.classList.remove(`neighbor-mines-${this.neighborMineCount}`);
         this.element.textContent = '';
         this.isOpened = false;
         this.hasMine = false;
         this.mark = null;
+        this.neighborMineCount = 0;
     }
 }
 
@@ -70,7 +85,7 @@ const MOUSE_BUTTON_RIGHT = 'MOUSE_BUTTON_RIGHT';
 const CELL_NEIGHBORS = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
 
 class GameField {
-    constructor(width, height) {
+    constructor(width, height, game) {
         this.width = width;
         this.height = height;
 
@@ -84,7 +99,7 @@ class GameField {
             this.element.appendChild(rowElement);
 
             for (let x = 0; x < this.width; x += 1) {
-                const cell = new Cell(x, y);
+                const cell = new Cell(x, y, game);
                 this.cells.push(cell);
                 rowElement.appendChild(cell.element);
             }
@@ -94,11 +109,25 @@ class GameField {
 
         let leftMouseButtonDown = false;
         let rightMouseButtonDown = false;
-        this.element.addEventListener('mousedown', function(event) {
+        this.element.addEventListener('mousedown', (event) => {
             if (event.which === 1) {
                 leftMouseButtonDown = true;
             } else if (event.which === 3) {
                 rightMouseButtonDown = true;
+            }
+
+            if (event.target.classList.contains('cell')) {
+                const x = Number.parseInt(event.target.dataset.x);
+                const y = Number.parseInt(event.target.dataset.y);
+                const cell = this.getCell(x, y);
+
+                if (leftMouseButtonDown && rightMouseButtonDown) {
+                    for (const neighborCell of this.getNeighbors(cell)) {
+                        if (!neighborCell.isOpened && neighborCell.mark == null) {
+                            neighborCell.element.classList.add('active');
+                        }
+                    }
+                }
             }
         });
         this.element.addEventListener('mouseup', (event) => {
@@ -119,7 +148,11 @@ class GameField {
                 if (event.target.classList.contains('cell')) {
                     const x = Number.parseInt(event.target.dataset.x);
                     const y = Number.parseInt(event.target.dataset.y);
-                    this.onCellClick(this.getCell(x, y), mouseButton);
+                    const cell = this.getCell(x, y);
+                    for (const neighborCell of this.getNeighbors(cell)) {
+                        neighborCell.element.classList.remove('active');
+                    }
+                    this.onCellClick(cell, mouseButton);
                 }
             }
 
@@ -171,23 +204,16 @@ class GameField {
             this.cells[mineIndex].hasMine = true;
         }
 
-        for (let y = 0; y < this.height; y += 1) {
-            for (let x = 0; x < this.width; x += 1) {
-                let neighborMineCount = 0;
-                for (const [dx, dy] of CELL_NEIGHBORS) {
-                    if (
-                        x + dx < 0 || x + dx >= this.width ||
-                        y + dy < 0 || y + dy >= this.height
-                    ) {
-                        continue;
-                    }
-
-                    if (this.getCell(x + dx, y + dy).hasMine) {
-                        neighborMineCount += 1;
-                    }
+        for (const cell of this.cells) {
+            let neighborMineCount = 0;
+            for (const neighborCell of this.getNeighbors(cell)) {
+                if (neighborCell.hasMine) {
+                    neighborMineCount += 1;
                 }
-
-                this.cells[y * this.width + x].neighborMineCount = neighborMineCount;
+            }
+            cell.neighborMineCount = neighborMineCount;
+            if (neighborMineCount !== 0) {
+                cell.element.classList.add(`neighbor-mines-${neighborMineCount}`);
             }
         }
     }
@@ -255,6 +281,44 @@ class GameField {
     }
 }
 
+class Timer {
+    constructor(element) {
+        this.element = element;
+    }
+
+    start() {
+        this.startTime = null;
+        this.lastFrameTime = null;
+        this.currentTime = null;
+        this.shouldStop = false;
+
+        const callback = (currentTime) => {
+            if (this.startTime === null) {
+                this.startTime = currentTime;
+                this.lastFrameTime = currentTime;
+            }
+            this.currentTime = currentTime;
+
+            const secondsElapsed = Math.floor((this.currentTime - this.startTime) / 1000);
+            const millisElapsed = new String(Math.floor(this.currentTime - this.startTime) % 1000).padStart(3, '0');
+
+            if (currentTime - this.lastFrameTime > 1000 / 60) {
+                this.element.textContent = `${secondsElapsed}:${millisElapsed}`;
+                this.lastFrameTime = currentTime;
+            }
+
+            if (!this.shouldStop) {
+                requestAnimationFrame(callback);
+            }
+        };
+        requestAnimationFrame(callback);
+    }
+
+    stop() {
+        this.shouldStop = true;
+    }
+}
+
 const GAME_STATE_START = 'GAME_STATE_START';
 const GAME_STATE_IN_PROGRESS = 'GAME_STATE_IN_PROGRESS'
 const GAME_STATE_WIN = 'GAME_STATE_WIN'
@@ -267,14 +331,17 @@ class Game {
         this.height = 10;
         this.mineCount = 10;
 
-        this.gameField = new GameField(this.width, this.height, this.mineCount);
+        this.minesLeftElement = document.getElementById('mines-left');
+        this.setMinesLeft(this.mineCount);
+
+        const timerElement = document.getElementById('timer');
+        this.timer = new Timer(timerElement);
+
+        this.gameField = new GameField(this.width, this.height, this);
         this.gameField.fillWithMines(this.mineCount);
 
         const gameFieldRootElement = document.getElementById('game-field-root');
         gameFieldRootElement.appendChild(this.gameField.element);
-
-        this.gameStateElement = document.getElementById('game-state');
-        this.gameStateElement.textContent = this.state;
 
         this.gameField.onCellClick = (cell, mouseButton) => {
             switch (mouseButton) {
@@ -291,10 +358,15 @@ class Game {
         };
     }
 
+    setMinesLeft(minesLeft) {
+        this.minesLeft = minesLeft;
+        this.minesLeftElement.textContent = minesLeft;
+    }
+
     reveal(cell) {
         if (this.state === GAME_STATE_START) {
+            this.timer.start();
             this.state = GAME_STATE_IN_PROGRESS;
-            this.gameStateElement.textContent = this.state;
         }
 
         if (!cell.hasMine) {
@@ -303,18 +375,18 @@ class Game {
             const totalCellCount = this.gameField.width * this.gameField.height;
             if (this.gameField.revealedCellCount + this.mineCount === totalCellCount) {
                 this.state = GAME_STATE_WIN;
+                this.timer.stop();
                 this.gameField.revealAll();
-                this.gameStateElement.textContent = this.state;
             }
         } else {
             this.state = GAME_STATE_LOSE;
+            this.timer.stop();
             this.gameField.revealAll();
             for (const cell of this.gameField.cells) {
                 if (cell.hasMine) {
                     cell.element.textContent = '💥';
                 }
             }
-            this.gameStateElement.textContent = this.state;
         }
     }
 
@@ -362,8 +434,11 @@ class Game {
         this.gameField.reset();
         this.gameField.fillWithMines(this.mineCount);
 
+        this.timer.stop();
+        this.timer.element.textContent = '0:000';
+
         this.state = GAME_STATE_START;
-        this.gameStateElement.textContent = this.state;
+        this.setMinesLeft(this.mineCount);
     }
 }
 

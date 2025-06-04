@@ -9,11 +9,16 @@
 
     <body>
         <h1>Mines</h1>
+        <div class="container">
+            <div class="game-container">
+                <div class="game-state-container">
+                    <div class="game-bombs-left">Bombs left: <span id="mines-left"></span></div>
+                    <div class="game-timer">Timer: <span id="timer">0:000</span></div>
+                </div>
+                <button class="new-game-button" id="reset-button">New game</button>
+                <div id="game-field-root"></div>
+            </div>
         <div>
-            <button id="reset-button">New game</button>
-            <span id="game-state"></span>
-            <div id="game-field-root"></div>
-        </div>
         <script src="main.js"></script>
     </body>
 </html>
