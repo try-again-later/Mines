@@ -1,36 +1,42 @@
 body {
-    background-color: #f1f5f9;
     font-family: sans-serif;
+    background-color: #f1f5f9;
 }
 
 h1 {
     text-align: center;
+    margin-bottom: 3rem;
     color: #0f172a;
 }
 
 button {
     font-size: 1rem;
-    padding: 0.5rem 0.75rem;
     text-transform: capitalize;
-    border: 0.15rem solid #71717a;
-    border-radius: 1rem;
-    background-color: transparent;
     font-weight: 700;
+
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    border: 2px solid #71717a;
+
     color: #71717a;
+    background-color: transparent;
+
     cursor: pointer;
     transition:
         background-color 75ms,
-        color 75ms;
+        color 75ms,
+        transform 40ms;
 }
 
 button:hover {
-    background-color: #71717a;
     color: white;
+    background-color: #71717a;
 }
 
 button:active {
-    border-color: #52525b;
     background-color: #52525b;
+    border-color: #52525b;
+    transform: scale(0.95);
 }
 
 .container {
@@ -45,44 +51,41 @@ button:active {
 }
 
 .game-state-container {
+    font-size: 1.25rem;
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    font-size: 1.25rem;
 }
 
 .new-game-button {
     align-self: center;
 }
 
-.game-state-container > * {
-    flex: 1;
-}
-
-.game-timer {
-    text-align: right;
-}
-
-#timer {
+.game-timer-display {
     font-family: monospace;
+    min-width: 4ch;
+    display: inline-block;
 }
 
 .cell {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+
     min-width: 2rem;
     max-width: 2rem;
     height: 2rem;
     border-radius: 0.25rem;
+
+    color: white;
+    background-color: #334155;
+
     cursor: pointer;
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 700;
     transition:
         transform 100ms,
         background-color 75ms;
-
-    background-color: #334155;
-    color: white;
 }
 
 .cell:hover {
@@ -94,10 +97,10 @@ button:active {
 }
 
 .cell.opened {
-    cursor: default;
-
-    background-color: #cbd5e1;
     color: #334155;
+    background-color: #cbd5e1;
+
+    cursor: default;
 }
 
 .cell.opened.neighbor-mines-1 {

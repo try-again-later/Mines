@@ -107,6 +107,8 @@ class GameField {
 
         this.onCellClick = () => {};
 
+        const activeCells = [];
+
         let leftMouseButtonDown = false;
         let rightMouseButtonDown = false;
         this.element.addEventListener('mousedown', (event) => {
@@ -125,6 +127,7 @@ class GameField {
                     for (const neighborCell of this.getNeighbors(cell)) {
                         if (!neighborCell.isOpened && neighborCell.mark == null) {
                             neighborCell.element.classList.add('active');
+                            activeCells.push(neighborCell);
                         }
                     }
                 }
@@ -144,14 +147,16 @@ class GameField {
                 mouseButton = MOUSE_BUTTON_RIGHT;
             }
 
+            while (activeCells.length > 0) {
+                const cell = activeCells.pop();
+                cell.element.classList.remove('active');
+            }
+
             if (mouseButton !== null) {
                 if (event.target.classList.contains('cell')) {
                     const x = Number.parseInt(event.target.dataset.x);
                     const y = Number.parseInt(event.target.dataset.y);
                     const cell = this.getCell(x, y);
-                    for (const neighborCell of this.getNeighbors(cell)) {
-                        neighborCell.element.classList.remove('active');
-                    }
                     this.onCellClick(cell, mouseButton);
                 }
             }
@@ -281,9 +286,13 @@ class GameField {
     }
 }
 
+function renderTime(millis) {
+}
+
 class Timer {
     constructor(element) {
         this.element = element;
+        this.stopped = Promise.resolve();
     }
 
     start() {
@@ -292,30 +301,45 @@ class Timer {
         this.currentTime = null;
         this.shouldStop = false;
 
-        const callback = (currentTime) => {
-            if (this.startTime === null) {
-                this.startTime = currentTime;
-                this.lastFrameTime = currentTime;
-            }
-            this.currentTime = currentTime;
+        this.stopped = new Promise((resolve) => {
+            const callback = (currentTime) => {
+                if (this.startTime === null) {
+                    this.startTime = currentTime;
+                    this.lastFrameTime = currentTime;
+                }
+                this.currentTime = currentTime;
 
-            const secondsElapsed = Math.floor((this.currentTime - this.startTime) / 1000);
-            const millisElapsed = new String(Math.floor(this.currentTime - this.startTime) % 1000).padStart(3, '0');
+                const secondsElapsed = Math.floor((this.currentTime - this.startTime) / 1000);
+                const millisElapsed = new String(Math.floor(this.currentTime - this.startTime) % 1000).padStart(3, '0');
 
-            if (currentTime - this.lastFrameTime > 1000 / 60) {
-                this.element.textContent = `${secondsElapsed}:${millisElapsed}`;
-                this.lastFrameTime = currentTime;
-            }
+                if (currentTime - this.lastFrameTime > 1000 / 60) {
+                    this.element.textContent = `${secondsElapsed}:${millisElapsed}`;
+                    this.lastFrameTime = currentTime;
+                }
 
-            if (!this.shouldStop) {
-                requestAnimationFrame(callback);
-            }
-        };
-        requestAnimationFrame(callback);
+                if (!this.shouldStop) {
+                    requestAnimationFrame(callback);
+                } else {
+                    resolve();
+                }
+            };
+
+            requestAnimationFrame(callback);
+        })
     }
 
     stop() {
         this.shouldStop = true;
+    }
+
+    reset() {
+        this.stop();
+        this.stopped.then(() => {
+            this.startTime = null;
+            this.lastFrameTime = null;
+            this.currentTime = null;
+            this.element.textContent = '0:000';
+        })
     }
 }
 
@@ -334,13 +358,13 @@ class Game {
         this.minesLeftElement = document.getElementById('mines-left');
         this.setMinesLeft(this.mineCount);
 
-        const timerElement = document.getElementById('timer');
+        const timerElement = document.getElementById('game-timer');
         this.timer = new Timer(timerElement);
 
         this.gameField = new GameField(this.width, this.height, this);
         this.gameField.fillWithMines(this.mineCount);
 
-        const gameFieldRootElement = document.getElementById('game-field-root');
+        const gameFieldRootElement = document.getElementById('game-field-container');
         gameFieldRootElement.appendChild(this.gameField.element);
 
         this.gameField.onCellClick = (cell, mouseButton) => {
@@ -434,8 +458,7 @@ class Game {
         this.gameField.reset();
         this.gameField.fillWithMines(this.mineCount);
 
-        this.timer.stop();
-        this.timer.element.textContent = '0:000';
+        this.timer.reset();
 
         this.state = GAME_STATE_START;
         this.setMinesLeft(this.mineCount);

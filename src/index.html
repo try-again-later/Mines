@@ -11,12 +11,15 @@
         <h1>Mines</h1>
         <div class="container">
             <div class="game-container">
-                <div class="game-state-container">
-                    <div class="game-bombs-left">Bombs left: <span id="mines-left"></span></div>
-                    <div class="game-timer">Timer: <span id="timer">0:000</span></div>
-                </div>
                 <button class="new-game-button" id="reset-button">New game</button>
-                <div id="game-field-root"></div>
+                <div class="game-state-container">
+                    <div>Mines left: <span id="mines-left"></span></div>
+                    <div class="game-timer">
+                        Timer:
+                        <span class="game-timer-display" id="game-timer">0:000</span>
+                    </div>
+                </div>
+                <div id="game-field-container"></div>
             </div>
         <div>
         <script src="main.js"></script>
