@@ -1,6 +1,23 @@
 const CELL_FLAG_MARK = 'CELL_FLAG_MARK';
 const CELL_QUESTION_MARK = 'CELL_QUESTION_MARK';
 
+const sprites = {
+    mine: document.getElementById('sprite-mine').content,
+    mineExplosion: document.getElementById('sprite-mine-explosion').content,
+    questionMark: document.getElementById('sprite-question-mark').content,
+    flagMark: document.getElementById('sprite-flag-mark').content,
+    neighborMineCount: {
+        1: document.getElementById('sprite-mine-neighbors-1').content,
+        2: document.getElementById('sprite-mine-neighbors-2').content,
+        3: document.getElementById('sprite-mine-neighbors-3').content,
+        4: document.getElementById('sprite-mine-neighbors-4').content,
+        5: document.getElementById('sprite-mine-neighbors-5').content,
+        6: document.getElementById('sprite-mine-neighbors-6').content,
+        7: document.getElementById('sprite-mine-neighbors-7').content,
+        8: document.getElementById('sprite-mine-neighbors-8').content,
+    },
+};
+
 class Cell {
     constructor(x, y, game) {
         this.x = x;
@@ -12,8 +29,8 @@ class Cell {
         this.hasMine = false;
         this.mark = null;
 
-        this.element = document.createElement('td');
-        this.element.classList.add('cell');
+        this.element = document.createElement('div');
+        this.element.classList.add('game-field-cell');
         this.element.dataset.x = x;
         this.element.dataset.y = y;
     }
@@ -23,11 +40,13 @@ class Cell {
         switch (mark) {
         case CELL_FLAG_MARK:
             this.game.setMinesLeft(this.game.minesLeft - 1);
-            this.element.textContent = '🚩';
+            this.element.innerHTML = '';
+            this.element.appendChild(sprites.flagMark.cloneNode(true));
             break;
         case CELL_QUESTION_MARK:
             this.game.setMinesLeft(this.game.minesLeft + 1);
-            this.element.textContent = '?';
+            this.element.innerHTML = '';
+            this.element.appendChild(sprites.questionMark.cloneNode(true));
             break;
         }
     }
@@ -42,7 +61,7 @@ class Cell {
         }
 
         this.mark = null;
-        this.element.textContent = '';
+        this.element.innerHTML = '';
     }
 
     reveal() {
@@ -57,11 +76,15 @@ class Cell {
         this.isOpened = true;
 
         if (this.hasMine) {
-            this.element.textContent = '💣';
+            this.element.innerHTML = '';
+            this.element.appendChild(sprites.mine.cloneNode(true));
         } else if (this.neighborMineCount > 0) {
-            this.element.textContent = this.neighborMineCount;
+            this.element.innerHTML = '';
+            this.element.appendChild(
+                sprites.neighborMineCount[this.neighborMineCount].cloneNode(true)
+            );
         } else {
-            this.element.textContent = '';
+            this.element.innerHTML = '';
         }
 
         this.element.classList.add('opened');
@@ -70,7 +93,7 @@ class Cell {
     reset() {
         this.element.classList.remove('opened');
         this.element.classList.remove(`neighbor-mines-${this.neighborMineCount}`);
-        this.element.textContent = '';
+        this.element.innerHTML = '';
         this.isOpened = false;
         this.hasMine = false;
         this.mark = null;
@@ -89,19 +112,15 @@ class GameField {
         this.width = width;
         this.height = height;
 
-        this.element = document.createElement('table');
-        this.element.classList.add('game-field');
+        this.element = document.getElementById('game-field');
 
         this.revealedCellCount = 0;
         this.cells = [];
         for (let y = 0; y < this.height; y += 1) {
-            const rowElement = document.createElement('tr');
-            this.element.appendChild(rowElement);
-
             for (let x = 0; x < this.width; x += 1) {
                 const cell = new Cell(x, y, game);
                 this.cells.push(cell);
-                rowElement.appendChild(cell.element);
+                this.element.appendChild(cell.element);
             }
         }
 
@@ -118,7 +137,7 @@ class GameField {
                 rightMouseButtonDown = true;
             }
 
-            if (event.target.classList.contains('cell')) {
+            if (event.target.classList.contains('game-field-cell')) {
                 const x = Number.parseInt(event.target.dataset.x);
                 const y = Number.parseInt(event.target.dataset.y);
                 const cell = this.getCell(x, y);
@@ -153,7 +172,7 @@ class GameField {
             }
 
             if (mouseButton !== null) {
-                if (event.target.classList.contains('cell')) {
+                if (event.target.classList.contains('game-field-cell')) {
                     const x = Number.parseInt(event.target.dataset.x);
                     const y = Number.parseInt(event.target.dataset.y);
                     const cell = this.getCell(x, y);
@@ -364,8 +383,8 @@ class Game {
         this.gameField = new GameField(this.width, this.height, this);
         this.gameField.fillWithMines(this.mineCount);
 
-        const gameFieldRootElement = document.getElementById('game-field-container');
-        gameFieldRootElement.appendChild(this.gameField.element);
+        // const gameFieldRootElement = document.getElementById('game-field-container');
+        // gameFieldRootElement.appendChild(this.gameField.element);
 
         this.gameField.onCellClick = (cell, mouseButton) => {
             switch (mouseButton) {
@@ -408,7 +427,8 @@ class Game {
             this.gameField.revealAll();
             for (const cell of this.gameField.cells) {
                 if (cell.hasMine) {
-                    cell.element.textContent = '💥';
+                    cell.element.innerHTML = '';
+                    cell.element.appendChild(sprites.mineExplosion.cloneNode(true));
                 }
             }
         }
@@ -467,5 +487,5 @@ class Game {
 
 const game = new Game();
 
-const buttonElement = document.getElementById('reset-button');
+const buttonElement = document.getElementById('new-game-button');
 buttonElement.addEventListener('click', () => { game.reset(); })

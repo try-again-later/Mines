@@ -10,18 +10,116 @@
     <body>
         <h1>Mines</h1>
         <div class="container">
-            <div class="game-container">
-                <button class="new-game-button" id="reset-button">New game</button>
-                <div class="game-state-container">
-                    <div>Mines left: <span id="mines-left"></span></div>
-                    <div class="game-timer">
-                        Timer:
-                        <span class="game-timer-display" id="game-timer">0:000</span>
+            <div class="game-container" id="game-field-container">
+                <div class="game-ui">
+                    <button id="new-game-button">New game</button>
+                    <button id="difficulty-button">Difficulty</button>
+                    <button id="high-scores-button">High scores</button>
+                </div>
+                <div class="game-field" id="game-field">
+                    <div class="game-state-container">
+                        <div>
+                            Mines left:
+                            <span id="mines-left"></span>
+                        </div>
+                        <div>
+                            Difficulty:
+                            <span id="difficulty">Easy</span>
+                        </div>
+                        <div class="game-timer">
+                            Timer:
+                            <span class="game-timer-display" id="game-timer">0:000</span>
+                        </div>
                     </div>
                 </div>
-                <div id="game-field-container"></div>
             </div>
-        <div>
+        </div>
+
+        <template id="sprite-mine">
+            <svg class="sprite" viewBox="-2 0 64.006 64.006" xmlns="http://www.w3.org/2000/svg">
+                <path d="M59.981,1.976c-0.01-0.873-0.587-1.67-1.471-1.908 c-1.064-0.285-2.158,0.348-2.443,1.413c-0.047,0.175-0.061,0.35-0.06,0.522C56.006,2.005,56,2.005,56,2.006c0,7.708-12,14-12,14    l4,2c0,0,12-5.513,12-16C60.003,1.995,59.989,1.986,59.981,1.976z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#FFCC66;" />
+                <path d="M53.426,18.625L45.32,10.52c-0.745-0.746-1.955-0.746-2.701,0l-8.105,8.105 c-0.746,0.746-0.746,1.956,0,2.701l8.105,8.105c0.746,0.746,1.956,0.746,2.701,0l8.105-8.105    C54.172,20.581,54.172,19.371,53.426,18.625z" style="fill:#333333;"/>
+                <circle cx="26" cy="38.006" r="26" style="fill:#4D4D4D;"/>
+            </svg>
+        </template>
+
+        <template id="sprite-mine-explosion">
+            <svg class="sprite" viewBox="0 0 22.778 22.778" xmlns="http://www.w3.org/2000/svg">
+                <polygon style="fill: #F2463A;" points="17.931,15.433 18.83,10.328 14.412,12.625 12.438,8.625 10.468,12.616 6.05,10.269 6.912,15.437 2.098,16.137 4.685,18.66 5.68,18.66 3.59,16.622 7.713,16.021 6.967,11.542 10.773,13.566 12.438,10.193 14.103,13.568 17.903,11.593 17.122,16.017 21.285,16.622 19.196,18.66 20.19,18.66 22.778,16.137 "/>
+                <polygon style="fill: #FFA000;" points="16.322,16.545 16.95,12.977 13.84,14.594 12.427,11.732 11.02,14.583 7.917,12.935 8.518,16.548 5.119,17.042 6.777,18.66 8.766,18.66 8.102,18.012 10.121,17.718 9.748,15.481 11.631,16.483 12.427,14.87 13.222,16.479 15.095,15.507 14.704,17.714 16.752,18.012 16.088,18.66 18.076,18.66 19.737,17.042 "/>
+                <path style="fill: #FFF392;" d="M12.438,17.909c-0.503,0-0.91,0.408-0.91,0.911h1.822C13.35,18.316,12.942,17.909,12.438,17.909z" />
+                <polygon style="fill: #FF4838;" points="17.915,3.958 14.888,10.515 15.382,10.72 "/>
+                <polygon style="fill: #FF4838;" points="5.694,14.399 0,9.958 5.348,14.809 "/>
+                <polygon style="fill: #FF4838;" points="21.633,11.866 19.072,14.083 19.453,14.458 "/>
+                <polygon style="fill: #FF4838;" points="10.303,10.5 8.866,7.43 9.801,10.688 "/>
+            </svg>
+        </template>
+
+        <template id="sprite-question-mark">
+            <svg class="sprite" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <g fill-rule="evenodd">
+                    <path d="M30.249 2.065C18.612 2.789 12.531 9.379 12 21.296h11.739c.147-4.128 2.451-7.214 6.741-7.669c4.211-.447 8.206.556 9.416 3.435c1.307 3.11-1.627 6.724-3.022 8.241c-2.582 2.813-6.776 4.865-8.95 7.9c-2.131 2.974-2.51 6.887-2.674 11.676h10.346c.145-3.062.349-5.995 1.742-7.898c2.266-3.092 5.65-4.541 8.486-6.983c2.709-2.334 5.559-5.147 6.043-9.501C53.32 7.466 42.683 1.289 30.249 2.065" fill="#ffffff" />
+                    <ellipse cx="30.515" cy="55.567" rx="6.532" ry="6.433" fill="#ffffff" />
+                </g>
+            </svg>
+        </template>
+
+        <template id="sprite-flag-mark">
+            <svg class="sprite" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <defs> <style> .cls-1 { fill: #F03872; } .cls-1, .cls-2 { fill-rule: evenodd; } .cls-2 { fill: #F5B496; } </style> </defs>
+                <path class="cls-1" d="M386.326,838.641c0-7.762-20.367,5.33-26.3,5.33V811.993c8.7,0.3,25.359,3,26.3,10.659,1.188,9.623,23.674,5.331,23.674,5.331S386.326,848.264,386.326,838.641Z" transform="translate(-350 -810)" />
+                <path class="cls-2" d="M353,810a3,3,0,0,1,3,3v54a3,3,0,0,1-6,0V813A3,3,0,0,1,353,810Z" transform="translate(-350 -810)" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-1">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.64594 0L2.32922 2.15836L3.67086 4.84164L7.00004 3.17705V13H3.00004V16H13V13H10V0H6.64594Z" fill="#1d4ed8" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-2">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 5C3 2.23858 5.23858 0 8 0H8.07519C10.7951 0 13 2.20491 13 4.92481C13 6.36248 12.3718 7.72838 11.2802 8.66401L6.22155 13H13V16H3V11.8101L9.32784 6.38624C9.75447 6.02056 10 5.48671 10 4.92481C10 3.86177 9.13823 3 8.07519 3H8C6.89543 3 6 3.89543 6 5H3Z" fill="#b91c1c" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-3">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.5 4.5C6.5 3.67157 7.17157 3 8 3C8.82843 3 9.5 3.67157 9.5 4.5C9.5 5.32843 8.82843 6 8 6H7V9H8C9.10457 9 10 9.89543 10 11C10 12.1046 9.10457 13 8 13C6.89543 13 6 12.1046 6 11H3C3 13.7614 5.23858 16 8 16C10.7614 16 13 13.7614 13 11C13 9.57824 12.4066 8.29508 11.4539 7.38469C12.107 6.60363 12.5 5.59771 12.5 4.5C12.5 2.01472 10.4853 0 8 0C5.51472 0 3.5 2.01472 3.5 4.5H6.5Z" fill="#15803d" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-4">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 0H10V7H6.03769L7.46324 0.680058L4.53676 0.0199507L3 6.83293V10H10V16H13V0Z" fill="#0e7490" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-5">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.11984 0H13V3H6.88024L6.70068 5.15468C7.11748 5.05361 7.55269 5 8.00004 5C11.0376 5 13.5 7.46243 13.5 10.5C13.5 13.5376 11.0376 16 8.00004 16C5.68948 16 3.71518 14.5757 2.90039 12.5628L5.6812 11.4372C6.05319 12.3561 6.95322 13 8.00004 13C9.38075 13 10.5 11.8807 10.5 10.5C10.5 9.11929 9.38075 8 8.00004 8C7.36498 8 6.78843 8.23483 6.34681 8.62461L5.9215 9H3.36984L4.11984 0Z" fill="#a16207" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-6">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M8.14856 5.00197C11.1174 5.0807 13.5 7.51211 13.5 10.5C13.5 13.5376 11.0376 16 8 16C4.96243 16 2.5 13.5376 2.5 10.5C2.5 9.44185 2.79882 8.45349 3.31667 7.61471L7.43172 0.0343628L10.0683 1.46564L8.14856 5.00197ZM5.90352 9.13756C6.34947 8.45275 7.12186 8 8 8C9.38071 8 10.5 9.11929 10.5 10.5C10.5 11.8807 9.38071 13 8 13C6.61929 13 5.5 11.8807 5.5 10.5C5.5 10.0937 5.60153 9.69386 5.79537 9.33679L5.90352 9.13756Z" fill="#047857" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-7">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.875 3H3V0H13V3.3L7.88462 15.5769L5.11538 14.4231L9.875 3Z" fill="#a21caf" />
+            </svg>
+        </template>
+
+        <template id="sprite-mine-neighbors-8">
+            <svg class="sprite" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M11.4539 7.38469C12.107 6.60363 12.5 5.59772 12.5 4.5C12.5 2.01472 10.4853 0 8 0C5.51472 0 3.5 2.01472 3.5 4.5C3.5 5.59771 3.89304 6.60363 4.54608 7.38469C3.59342 8.29508 3 9.57824 3 11C3 13.7614 5.23858 16 8 16C10.7614 16 13 13.7614 13 11C13 9.57824 12.4066 8.29508 11.4539 7.38469ZM9.5 4.5C9.5 5.32843 8.82843 6 8 6C7.17157 6 6.5 5.32843 6.5 4.5C6.5 3.67157 7.17157 3 8 3C8.82843 3 9.5 3.67157 9.5 4.5ZM8 9C6.89543 9 6 9.89543 6 11C6 12.1046 6.89543 13 8 13C9.10457 13 10 12.1046 10 11C10 9.89543 9.10457 9 8 9Z" fill="#be185d" />
+            </svg>
+        </template>
+
         <script src="main.js"></script>
     </body>
 </html>
