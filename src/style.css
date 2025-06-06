@@ -73,15 +73,13 @@ button:active {
     --height: 10;
 
     display: grid;
-    grid-template-columns: repeat(var(--width), minmax(1rem, 1fr));
-    grid-template-rows: repeat(var(--height), minmax(1rem, 1fr));
-    gap: clamp(0.125rem, 1.5%, 0.5rem);
+    grid-template-columns: repeat(var(--width), minmax(1.25rem, 1fr));
+    grid-template-rows: repeat(var(--height), minmax(1.25rem, 1fr));
 
-    /* max height is 40rem */
-    aspect-ratio: var(--width) / var(--height);
     width: 100%;
+    /* 40rem is the max height */
     max-width: calc(40rem / var(--height) * var(--width));
-    max-height: 40rem;
+    aspect-ratio: var(--width) / var(--height);
     margin: 0 auto;
     margin-top: 4rem;
     position: relative;
@@ -102,21 +100,56 @@ button:active {
     padding: 0.5rem 0;
 }
 
-.game-field-cell {
-    font-size: 1.5rem;
-    font-weight: 700;
-    text-align: center;
-
-    position: relative;
-    border-radius: 0.25rem;
-
-    color: white;
-    background-color: #334155;
+.cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     cursor: pointer;
     transition:
-        transform 100ms,
+        transform 100ms;
+}
+
+.cell.opened {
+    cursor: default;
+}
+
+.cell-content {
+    position: relative;
+    width: 90%;
+    height: 90%;
+    border-radius: 0.25rem;
+
+    background-color: #cbd5e1;
+
+    pointer-events: none;
+}
+
+.cell-cover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0.25rem;
+
+    background-color: #334155;
+
+    pointer-events: none;
+    transition:
         background-color 75ms;
+}
+
+.cell:hover .cell-cover {
+    background-color: #475569;
+}
+
+.cell.active {
+    transform: scale(0.75);
+}
+
+.cell.opened .cell-cover {
+    background-color: transparent;
 }
 
 .sprite {
@@ -127,19 +160,4 @@ button:active {
     height: 60%;
     transform: translate(-50%, -50%);
     pointer-events: none;
-}
-
-.game-field-cell:hover {
-    background-color: #475569;
-}
-
-.game-field-cell.active {
-    transform: scale(0.75);
-}
-
-.game-field-cell.opened {
-    color: #334155;
-    background-color: #cbd5e1;
-
-    cursor: default;
 }

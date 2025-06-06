@@ -1,6 +1,3 @@
-const CELL_FLAG_MARK = 'CELL_FLAG_MARK';
-const CELL_QUESTION_MARK = 'CELL_QUESTION_MARK';
-
 const sprites = {
     mine: document.getElementById('sprite-mine').content,
     mineExplosion: document.getElementById('sprite-mine-explosion').content,
@@ -18,10 +15,15 @@ const sprites = {
     },
 };
 
+const CELL_FLAG_MARK = 'CELL_FLAG_MARK';
+const CELL_QUESTION_MARK = 'CELL_QUESTION_MARK';
+
 class Cell {
     constructor(x, y, game) {
         this.x = x;
         this.y = y;
+
+        // TODO: Replace with a onMarkChanged callback or something.
         this.game = game;
 
         this.isOpened = false;
@@ -30,25 +32,39 @@ class Cell {
         this.mark = null;
 
         this.element = document.createElement('div');
-        this.element.classList.add('game-field-cell');
+        this.element.classList.add('cell');
         this.element.dataset.x = x;
         this.element.dataset.y = y;
+
+        this.contentElement = document.createElement('div');
+        this.contentElement.classList.add('cell-content');
+        this.element.appendChild(this.contentElement);
+
+        this.coverElement = document.createElement('div');
+        this.coverElement.classList.add('cell-cover');
+        this.contentElement.appendChild(this.coverElement);
+
+        // flag / question mark / mine / explosion / number of neighboring cells with a mine
+        this.spriteElement = null;
     }
 
     addMark(mark) {
         this.mark = mark;
+        this.spriteElement?.remove();
+
         switch (mark) {
-        case CELL_FLAG_MARK:
+        case CELL_FLAG_MARK: {
             this.game.setMinesLeft(this.game.minesLeft - 1);
-            this.element.innerHTML = '';
-            this.element.appendChild(sprites.flagMark.cloneNode(true));
-            break;
-        case CELL_QUESTION_MARK:
+            this.coverElement.appendChild(sprites.flagMark.cloneNode(true));
+        } break;
+
+        case CELL_QUESTION_MARK: {
             this.game.setMinesLeft(this.game.minesLeft + 1);
-            this.element.innerHTML = '';
-            this.element.appendChild(sprites.questionMark.cloneNode(true));
-            break;
+            this.coverElement.appendChild(sprites.questionMark.cloneNode(true));
+        } break;
         }
+
+        this.spriteElement = this.coverElement.lastElementChild;
     }
 
     hasMark() {
@@ -61,7 +77,7 @@ class Cell {
         }
 
         this.mark = null;
-        this.element.innerHTML = '';
+        this.spriteElement?.remove();
     }
 
     reveal() {
@@ -76,15 +92,14 @@ class Cell {
         this.isOpened = true;
 
         if (this.hasMine) {
-            this.element.innerHTML = '';
-            this.element.appendChild(sprites.mine.cloneNode(true));
+            this.spriteElement?.remove();
+            this.contentElement.appendChild(sprites.mine.cloneNode(true));
+            this.spriteElement = this.contentElement.lastElementChild;
         } else if (this.neighborMineCount > 0) {
-            this.element.innerHTML = '';
-            this.element.appendChild(
-                sprites.neighborMineCount[this.neighborMineCount].cloneNode(true)
-            );
-        } else {
-            this.element.innerHTML = '';
+            this.spriteElement?.remove();
+            const sprite = sprites.neighborMineCount[this.neighborMineCount];
+            this.contentElement.appendChild(sprite.cloneNode(true));
+            this.spriteElement = this.contentElement.lastElementChild;
         }
 
         this.element.classList.add('opened');
@@ -92,8 +107,8 @@ class Cell {
 
     reset() {
         this.element.classList.remove('opened');
-        this.element.classList.remove(`neighbor-mines-${this.neighborMineCount}`);
-        this.element.innerHTML = '';
+        this.spriteElement?.remove();
+
         this.isOpened = false;
         this.hasMine = false;
         this.mark = null;
@@ -137,7 +152,7 @@ class GameField {
                 rightMouseButtonDown = true;
             }
 
-            if (event.target.classList.contains('game-field-cell')) {
+            if (event.target.classList.contains('cell')) {
                 const x = Number.parseInt(event.target.dataset.x);
                 const y = Number.parseInt(event.target.dataset.y);
                 const cell = this.getCell(x, y);
@@ -172,7 +187,7 @@ class GameField {
             }
 
             if (mouseButton !== null) {
-                if (event.target.classList.contains('game-field-cell')) {
+                if (event.target.classList.contains('cell')) {
                     const x = Number.parseInt(event.target.dataset.x);
                     const y = Number.parseInt(event.target.dataset.y);
                     const cell = this.getCell(x, y);
@@ -236,9 +251,6 @@ class GameField {
                 }
             }
             cell.neighborMineCount = neighborMineCount;
-            if (neighborMineCount !== 0) {
-                cell.element.classList.add(`neighbor-mines-${neighborMineCount}`);
-            }
         }
     }
 
@@ -427,8 +439,9 @@ class Game {
             this.gameField.revealAll();
             for (const cell of this.gameField.cells) {
                 if (cell.hasMine) {
-                    cell.element.innerHTML = '';
-                    cell.element.appendChild(sprites.mineExplosion.cloneNode(true));
+                    cell.spriteElement?.remove();
+                    cell.contentElement.appendChild(sprites.mineExplosion.cloneNode(true));
+                    cell.spriteElement = cell.contentElement.lastElementChild;
                 }
             }
         }
