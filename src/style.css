@@ -106,11 +106,9 @@ button:active {
     justify-content: center;
 
     cursor: pointer;
-    transition:
-        transform 100ms;
 }
 
-.cell.opened {
+.cell.revealed {
     cursor: default;
 }
 
@@ -123,6 +121,8 @@ button:active {
     background-color: #cbd5e1;
 
     pointer-events: none;
+    transition:
+        transform 100ms;
 }
 
 .cell-cover {
@@ -144,11 +144,11 @@ button:active {
     background-color: #475569;
 }
 
-.cell.active {
+.cell.active .cell-content {
     transform: scale(0.75);
 }
 
-.cell.opened .cell-cover {
+.cell.revealed .cell-cover {
     background-color: transparent;
 }
 
