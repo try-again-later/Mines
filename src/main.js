@@ -111,34 +111,42 @@ class Cell {
         }
     }
 
-    animateReveal(delay) {
+    animateReveal(delay = 0) {
+        const duration = 150;
+        const totalDuration = delay + duration;
+        const delayOffset = delay / totalDuration;
+
         this.element.classList.add('revealed');
-        const animation = this.coverElement.animate([
+        this.coverElement.animate([
             {
+                offset: delayOffset,
                 opacity: 1,
                 transform: 'none',
             },
             {
-                offset: 0.5,
+                offset: delayOffset + (1 - delayOffset) * 0.35,
                 opacity: 1,
-                transform: 'translate(0, -5%)',
-            },
-            {
-                opacity: 0.0,
                 transform: 'translate(0, -10%)',
             },
+            {
+                offset: 1,
+                opacity: 0.0,
+                transform: 'translate(0, -20%)',
+            },
         ], {
-            duration: 150,
+            fill: 'forwards',
+            duration: totalDuration,
         });
-
-        animation.onfinish = () => {
-            this.coverElement.style.opacity = 0;
-        };
     }
 
     reset() {
         this.element.classList.remove('revealed');
+
+        for (const animation of this.coverElement.getAnimations()) {
+            animation.cancel();
+        }
         this.coverElement.style.opacity = 1;
+        this.coverElement.style.transform = 'none';
 
         this.spriteElement?.remove();
 
@@ -351,13 +359,7 @@ class GameField {
             const cellsToVisit = [revealedCell];
             revealedCell.depth = 0;
 
-            const maxDepth = 100;
             let currentDepth = 0;
-
-            const cellsByDepth = [];
-            for (let i = 0; i < maxDepth; i += 1) {
-                cellsByDepth.push([]);
-            }
 
             while (cellsToVisit.length > 0) {
                 const depthLayerSize = cellsToVisit.length;
@@ -367,8 +369,7 @@ class GameField {
                     nextCell.reveal();
                     this.revealedCellCount += 1;
 
-                    const depth = Math.min(nextCell.depth, maxDepth - 1);
-                    cellsByDepth[depth].push(nextCell);
+                    nextCell.animateReveal(Math.min(nextCell.depth, 100) * 15);
 
                     if (nextCell.neighborMineCount === 0) {
                         for (const neighborCell of this.getNeighbors(nextCell)) {
@@ -382,14 +383,6 @@ class GameField {
                 }
 
                 currentDepth += 1;
-            }
-
-            for (const [depth, cells] of cellsByDepth.entries()) {
-                setTimeout(() => {
-                    for (const cell of cells) {
-                        cell.animateReveal();
-                    }
-                }, depth * 15);
             }
         }
     }
