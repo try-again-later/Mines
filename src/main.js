@@ -1,19 +1,30 @@
-const sprites = {
-    mine: document.getElementById('sprite-mine').content,
-    mineExplosion: document.getElementById('sprite-mine-explosion').content,
-    questionMark: document.getElementById('sprite-question-mark').content,
-    flagMark: document.getElementById('sprite-flag-mark').content,
-    neighborMineCount: {
-        1: document.getElementById('sprite-mine-neighbors-1').content,
-        2: document.getElementById('sprite-mine-neighbors-2').content,
-        3: document.getElementById('sprite-mine-neighbors-3').content,
-        4: document.getElementById('sprite-mine-neighbors-4').content,
-        5: document.getElementById('sprite-mine-neighbors-5').content,
-        6: document.getElementById('sprite-mine-neighbors-6').content,
-        7: document.getElementById('sprite-mine-neighbors-7').content,
-        8: document.getElementById('sprite-mine-neighbors-8').content,
-    },
+const SPRITE_MINE = 'mine';
+const SPRITE_MINE_EXPLOSION = 'mine-explosion';
+const SPRITE_QUESTION_MARK = 'question-mark';
+const SPRITE_FLAG_MARK = 'flag-mark';
+const SPRITE_NEIGHBOR_MINE_COUNT = {
+    1: 'mine-neighbors-1',
+    2: 'mine-neighbors-2',
+    3: 'mine-neighbors-3',
+    4: 'mine-neighbors-4',
+    5: 'mine-neighbors-5',
+    6: 'mine-neighbors-6',
+    7: 'mine-neighbors-7',
+    8: 'mine-neighbors-8',
 };
+
+function createSpriteElement(name) {
+    const SVG = 'http://www.w3.org/2000/svg';
+
+    const element = document.createElementNS(SVG, 'svg');
+    element.classList.add('sprite');
+
+    const useElement = document.createElementNS(SVG, 'use');
+    useElement.setAttribute('href', `sprites.svg#${name}`);
+    element.appendChild(useElement);
+
+    return element;
+}
 
 const CELL_FLAG_MARK = 'CELL_FLAG_MARK';
 const CELL_QUESTION_MARK = 'CELL_QUESTION_MARK';
@@ -59,12 +70,12 @@ class Cell {
 
         switch (mark) {
             case CELL_FLAG_MARK: {
-                this.coverElement.appendChild(sprites.flagMark.cloneNode(true));
+                this.coverElement.appendChild(createSpriteElement(SPRITE_FLAG_MARK));
                 this.spriteElement = this.coverElement.lastElementChild;
             } break;
 
             case CELL_QUESTION_MARK: {
-                this.coverElement.appendChild(sprites.questionMark.cloneNode(true));
+                this.coverElement.appendChild(createSpriteElement(SPRITE_QUESTION_MARK));
                 this.spriteElement = this.coverElement.lastElementChild;
             } break;
         }
@@ -91,11 +102,11 @@ class Cell {
         this.spriteElement?.remove();
 
         if (this.hasMine) {
-            this.contentElement.appendChild(sprites.mine.cloneNode(true));
+            this.contentElement.appendChild(createSpriteElement(SPRITE_MINE));
             this.spriteElement = this.contentElement.lastElementChild;
         } else if (this.neighborMineCount > 0) {
-            const sprite = sprites.neighborMineCount[this.neighborMineCount];
-            this.contentElement.appendChild(sprite.cloneNode(true));
+            const sprite = createSpriteElement(SPRITE_NEIGHBOR_MINE_COUNT[this.neighborMineCount]);
+            this.contentElement.appendChild(sprite);
             this.spriteElement = this.contentElement.lastElementChild;
         }
     }
@@ -541,7 +552,7 @@ class Game {
             for (const cell of this.gameField.cells) {
                 if (cell.hasMine) {
                     cell.spriteElement?.remove();
-                    cell.contentElement.appendChild(sprites.mineExplosion.cloneNode(true));
+                    cell.contentElement.appendChild(createSpriteElement(SPRITE_MINE_EXPLOSION));
                     cell.spriteElement = cell.contentElement.lastElementChild;
                 }
             }
