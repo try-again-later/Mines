@@ -98,12 +98,37 @@ class Cell {
             this.contentElement.appendChild(sprite.cloneNode(true));
             this.spriteElement = this.contentElement.lastElementChild;
         }
+    }
 
+    animateReveal(delay) {
         this.element.classList.add('revealed');
+        const animation = this.coverElement.animate([
+            {
+                opacity: 1,
+                transform: 'none',
+            },
+            {
+                offset: 0.5,
+                opacity: 1,
+                transform: 'translate(0, -5%)',
+            },
+            {
+                opacity: 0.0,
+                transform: 'translate(0, -10%)',
+            },
+        ], {
+            duration: 150,
+        });
+
+        animation.onfinish = () => {
+            this.coverElement.style.opacity = 0;
+        };
     }
 
     reset() {
         this.element.classList.remove('revealed');
+        this.coverElement.style.opacity = 1;
+
         this.spriteElement?.remove();
 
         this.revealed = false;
@@ -304,36 +329,65 @@ class GameField {
 
         if (revealedCell.hasMine || revealedCell.neighborMineCount > 0) {
             revealedCell.reveal();
+            revealedCell.animateReveal();
             this.revealedCellCount += 1;
         } else {
             for (const cell of this.cells) {
-                cell.visited = false;
+                delete cell.visited;
+                delete cell.depth;
             }
 
             const cellsToVisit = [revealedCell];
+            revealedCell.depth = 0;
+
+            const maxDepth = 100;
+            let currentDepth = 0;
+
+            const cellsByDepth = [];
+            for (let i = 0; i < maxDepth; i += 1) {
+                cellsByDepth.push([]);
+            }
+
             while (cellsToVisit.length > 0) {
-                const nextCell = cellsToVisit.shift();
-                if (nextCell.visited) {
-                    continue;
-                }
+                const depthLayerSize = cellsToVisit.length;
 
-                nextCell.visited = true;
-                nextCell.reveal();
-                this.revealedCellCount += 1;
+                for (let i = 0; i < depthLayerSize; i += 1) {
+                    const nextCell = cellsToVisit.shift();
+                    nextCell.reveal();
+                    this.revealedCellCount += 1;
 
-                if (nextCell.neighborMineCount === 0) {
-                    for (const neighborCell of this.getNeighbors(nextCell)) {
-                        if (!neighborCell.visited && !neighborCell.revealed) {
-                            cellsToVisit.push(neighborCell);
+                    const depth = Math.min(nextCell.depth, maxDepth - 1);
+                    cellsByDepth[depth].push(nextCell);
+
+                    if (nextCell.neighborMineCount === 0) {
+                        for (const neighborCell of this.getNeighbors(nextCell)) {
+                            if (!neighborCell.visited && !neighborCell.revealed) {
+                                neighborCell.visited = true;
+                                neighborCell.depth = currentDepth + 1;
+                                cellsToVisit.push(neighborCell);
+                            }
                         }
                     }
                 }
+
+                currentDepth += 1;
+            }
+
+            for (const [depth, cells] of cellsByDepth.entries()) {
+                setTimeout(() => {
+                    for (const cell of cells) {
+                        cell.animateReveal();
+                    }
+                }, depth * 15);
             }
         }
     }
 
     revealAll() {
         for (const cell of this.cells) {
+            if (!cell.revealed) {
+                cell.animateReveal();
+            }
             cell.reveal();
         }
         this.revealedCellCount = this.width * this.height;
@@ -412,9 +466,9 @@ const GAME_STATE_LOSE = 'GAME_STATE_LOSE';
 class Game {
     constructor() {
         this.state = GAME_STATE_START;
-        this.width = 10;
-        this.height = 10;
-        this.mineCount = 10;
+        this.width = 16;
+        this.height = 16;
+        this.mineCount = 30;
 
         this.minesLeftElement = document.getElementById('mines-left');
         this.setMinesLeft(this.mineCount);
