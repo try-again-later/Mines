@@ -1,43 +1,161 @@
 body {
     font-family: sans-serif;
+    color: #1e293b;
     background-color: #f1f5f9;
+    accent-color: #334155;
 }
 
 h1 {
+    font-size: 2rem;
     text-align: center;
-    margin-bottom: 3rem;
-    color: #0f172a;
+    margin-bottom: 1.5em;
 }
 
-button {
-    font-size: 1rem;
-    text-transform: capitalize;
+label:has(~ input[disabled]) {
+    color: #aaa;
+}
+
+hr {
+    height: 1px;
+    border: none;
+    border-top: 1px solid #aaa;
+    margin: 0.75rem 0;
+}
+
+fieldset {
+    border: 1px solid #aaa;
+}
+
+/* Primary button */
+
+.primary-button {
+    font-size: 0.875rem;
     font-weight: 700;
 
-    padding: 0.25rem 0.75rem;
+    display: flex;
+
+    padding: 0.25em 0.75em;
     border-radius: 0.25rem;
-    border: 2px solid #71717a;
+    border: 2px solid #334155;
 
-    color: #71717a;
+    color: #334155;
     background-color: transparent;
-
     cursor: pointer;
-    transition:
-        background-color 75ms,
-        color 75ms,
-        transform 40ms;
 }
 
-button:hover {
+.primary-button:hover {
     color: white;
-    background-color: #71717a;
+    background-color: #334155;
 }
 
-button:active {
-    background-color: #52525b;
-    border-color: #52525b;
+.primary-button:active {
+    background-color: #1e293b;
+    border-color: #1e293b;
     transform: scale(0.95);
 }
+
+.primary-button-icon {
+    fill: #71717a;
+    width: 1em;
+    height: 1em;
+    align-self: center;
+}
+
+.primary-button:hover .primary-button-icon {
+    fill: white;
+}
+
+/* Secondary button */
+
+.secondary-button {
+    font-size: 0.875rem;
+
+    padding: 0.5em 1em;
+    border: none;
+    border-radius: 0.25rem;
+
+    background-color: #e5e5e5;
+    color: #1e293b;
+    cursor: pointer;
+}
+
+.secondary-button:hover {
+    background-color: #d4d4d4;
+}
+
+.secondary-button:active {
+    background-color: #c8c8c8;
+}
+
+/* Difficulty selection popup */
+
+.difficulty-selection-wrapper {
+    position: relative;
+}
+
+.difficulty-selection-popup {
+    font-size: 0.875rem;
+
+    box-sizing: border-box;
+    position: absolute;
+    z-index: 1;
+    display: none;
+
+    left: -60%;
+    width: 220%;
+    min-width: min-content;
+    max-width: 90vw;
+    min-height: 5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+
+    background-color: white;
+    box-shadow:
+        0px 4px 8px 0px rgba(0, 0, 0, 0.2),
+        0px 0px 4px 0px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 20rem) {
+    .difficulty-selection-popup {
+        position: fixed;
+        left: 5%;
+        width: 90%;
+    }
+}
+
+.difficulty-selection-heading {
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.difficulty-option {
+    display: flex;
+    justify-content: space-between;
+}
+
+.difficulty-option + .difficulty-option {
+    margin-top: 0.5rem;
+}
+
+.difficulty-selection-custom-options {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+}
+
+.difficulty-selection-buttons-block {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+/* Game */
 
 .game-container {
     display: flex;
@@ -64,34 +182,41 @@ button:active {
 }
 
 .game-field {
-    --width: 16;
-    --height: 16;
+    --game-field-width: 16;
+    --game-field-height: 16;
 
     display: grid;
-    grid-template-columns: repeat(var(--width), minmax(1.25rem, 1fr));
-    grid-template-rows: repeat(var(--height), minmax(1.25rem, 1fr));
+    grid-template-columns: repeat(var(--game-field-width), minmax(1.25rem, 1fr));
+
+    /* The first "auto" row is for the "mines left" and timer displays */
+    grid-template-rows: auto repeat(var(--game-field-height), minmax(1.25rem, 1fr));
+
+    /* Create a new stacking context, so that cell covers z-indidces don't spill out */
+    position: relative;
+    z-index: 0;
+
+    /* 40rem is the max height */
+    max-width: max(
+        calc(40rem / var(--game-field-height) * var(--game-field-width)),
+        calc(var(--game-field-width) * 1.25rem)
+    );
 
     width: 100%;
-    /* 40rem is the max height */
-    max-width: max(calc(40rem / var(--height) * var(--width)), calc(var(--width) * 1.25rem));
-    aspect-ratio: var(--width) / var(--height);
+    aspect-ratio: var(--game-field-width) / var(--game-field-height);
     margin: 0 auto;
-    margin-top: 4rem;
     position: relative;
 }
 
 .game-state-container {
     font-size: 1.125rem;
 
+    grid-column: 1 / span var(--game-field-width);
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 
-    position: absolute;
-    top: 0;
-    transform: translate(0, -100%);
-    width: 100%;
     padding: 0.5rem 0;
 }
 

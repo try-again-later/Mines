@@ -117,7 +117,12 @@ class Cell {
         const delayOffset = delay / totalDuration;
 
         this.element.classList.add('revealed');
+
         this.coverElement.animate([
+            {
+                opacity: 1,
+                transform: 'none',
+            },
             {
                 offset: delayOffset,
                 opacity: 1,
@@ -130,7 +135,7 @@ class Cell {
             },
             {
                 offset: 1,
-                opacity: 0.0,
+                opacity: 0,
                 transform: 'translate(0, -20%)',
             },
         ], {
@@ -140,14 +145,26 @@ class Cell {
     }
 
     reset() {
-        this.element.classList.remove('revealed');
-
         for (const animation of this.coverElement.getAnimations()) {
             animation.cancel();
         }
-        this.coverElement.style.opacity = 1;
-        this.coverElement.style.transform = 'none';
 
+        if (this.revealed) {
+            this.coverElement.animate([
+                {
+                    opacity: 0,
+                    transform: 'none',
+                },
+                {
+                    opacity: 1,
+                },
+            ], {
+                fill: 'forwards',
+                duration: 100,
+            });
+        }
+
+        this.element.classList.remove('revealed');
         this.spriteElement?.remove();
 
         this.revealed = false;
@@ -425,8 +442,8 @@ class Timer {
                 }
                 this.currentTime = currentTime;
 
-                // Update the timer 60 times per second
-                if (currentTime - this.lastFrameTime > 1000 / 60) {
+                // Update the timer display 30 times per second
+                if (currentTime - this.lastFrameTime > 1000 / 30) {
                     const millisElapsed = Math.floor(this.currentTime - this.startTime);
 
                     const secondsFormatted = Math.floor(millisElapsed / 1000);
@@ -473,6 +490,18 @@ class Game {
         this.width = 16;
         this.height = 16;
         this.mineCount = 30;
+
+        const difficultySelectionElement = document.getElementById('difficulty-selection');
+        let difficultySelectionVisisble = false;
+        document.getElementById('difficulty-selection-button').addEventListener('click', () => {
+            if (difficultySelectionVisisble) {
+                difficultySelectionElement.style.display = 'none';
+                difficultySelectionVisisble = false;
+            } else {
+                difficultySelectionElement.style.display = 'block';
+                difficultySelectionVisisble = true;
+            }
+        });
 
         this.minesLeftElement = document.getElementById('mines-left');
         this.setMinesLeft(this.mineCount);
