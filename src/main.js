@@ -146,7 +146,7 @@ class Cell {
 
     reset() {
         for (const animation of this.coverElement.getAnimations()) {
-            animation.cancel();
+            animation.finish();
         }
 
         if (this.revealed) {
@@ -157,6 +157,7 @@ class Cell {
                 },
                 {
                     opacity: 1,
+                    transform: 'none',
                 },
             ], {
                 fill: 'forwards',
