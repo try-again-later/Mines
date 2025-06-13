@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Mines</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <link rel="icon" href="favicon.ico" sizes="32x32" />
+        <link rel="icon" href="icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+        <link rel="preload" href="sprites.svg" as="image" type="image/svg+xml" />
+
+        <link rel="stylesheet" href="style.css" />
+        <script defer src="main.js"></script>
+    </head>
+
+    <body>
+        <h1>Mines</h1>
+        <div class="game-container">
+            <div class="game-ui">
+                <button class="primary-button" id="new-game-button">New game</button>
+
+                <div class="difficulty-selection-wrapper">
+                    <button class="primary-button" id="difficulty-selection-button">
+                        Difficulty
+                        <svg class="primary-button-icon" width="16px" height="16px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M7.29289,10.7071 C7.68342,11.0976 8.31658,11.0976 8.70711,10.7071 L11.7071,7.70711 C12.0976,7.31658 12.0976,6.68342 11.7071,6.29289 C11.3166,5.90237 10.6834,5.90237 10.2929,6.29289 L8,8.58579 L5.70711,6.29289 C5.31658,5.90237 4.68342,5.90237 4.29289,6.29289 C3.90237,6.68342 3.90237,7.31658 4.29289,7.70711 L7.29289,10.7071 Z" />
+                        </svg>
+                    </button>
+
+                    <div class="difficulty-selection-popup" id="difficulty-selection">
+                        <p class="difficulty-selection-heading">Difficulty selection</p>
+
+                        <label class="difficulty-option">
+                            Easy
+                            <input checked type="radio" name="difficulty" value="easy" />
+                        </label>
+
+                        <label class="difficulty-option">
+                            Medium
+                            <input type="radio" name="difficulty" value="medium" />
+                        </label>
+
+                        <label class="difficulty-option">
+                            Hard
+                            <input type="radio" name="difficulty" value="hard" />
+                        </label>
+
+                        <hr />
+
+                        <label class="difficulty-option">
+                            Custom
+                            <input type="radio" name="difficulty" value="custom" />
+                        </label>
+
+                        <fieldset class="difficulty-selection-custom-options">
+                            <legend>Custom settings</legend>
+
+                            <label for="custom-field-width">Width</label>
+                            <input disabled type="number" name="width" id="custom-field-width" value="10" min="1" max="100" />
+
+                            <label for="custom-field-height">Height</label>
+                            <input disabled type="number" name="height" id="custom-field-height" value="10" min="1" max="100" />
+
+                            <label for="custom-mine-count">Mines</label>
+                            <input disabled type="number" name="mines" id="custom-mine-count" value="10" min="1" max="10000" />
+                        </fieldset>
+
+                        <div class="difficulty-selection-buttons-block">
+                            <button class="secondary-button">Confirm</button>
+                            <button class="secondary-button">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-field" id="game-field">
+                <div class="game-state-container">
+                    <div>
+                        Mines left:
+                        <span id="mines-left"></span>
+                    </div>
+                    <div class="game-timer">
+                        Timer:
+                        <span class="game-timer-display" id="game-timer">0:000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
