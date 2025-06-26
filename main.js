@@ -99,6 +99,9 @@ class Cell {
         this.revealed = true;
 
         this.mark = null;
+    }
+
+    addSprite() {
         this.spriteElement?.remove();
 
         if (this.hasMine) {
@@ -112,9 +115,6 @@ class Cell {
     }
 
     animateReveal(delay = 0) {
-        const duration = 150;
-        const totalDuration = delay + duration;
-        const delayOffset = delay / totalDuration;
 
         this.element.classList.add('revealed');
 
@@ -124,23 +124,18 @@ class Cell {
                 transform: 'none',
             },
             {
-                offset: delayOffset,
-                opacity: 1,
-                transform: 'none',
-            },
-            {
-                offset: delayOffset + (1 - delayOffset) * 0.35,
+                offset: 0.35,
                 opacity: 1,
                 transform: 'translate(0, -10%)',
             },
             {
-                offset: 1,
                 opacity: 0,
                 transform: 'translate(0, -20%)',
             },
         ], {
             fill: 'forwards',
-            duration: totalDuration,
+            duration: 150,
+            delay,
         });
     }
 
@@ -161,7 +156,7 @@ class Cell {
                 },
             ], {
                 fill: 'forwards',
-                duration: 100,
+                duration: 0,
             });
         }
 
@@ -355,6 +350,10 @@ class GameField {
 
             mineCandidates[candidateIndex] = mineCandidates[mineCandidates.length - 1];
             mineCandidates.pop();
+        }
+
+        for (const cell of this.cells) {
+            cell.addSprite();
         }
     }
 
