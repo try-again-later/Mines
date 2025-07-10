@@ -1,17 +1,20 @@
 import Cell from './Cell';
-
-export const MOUSE_BUTTON_LEFT = 'MOUSE_BUTTON_LEFT';
-export const MOUSE_BUTTON_BOTH = 'MOUSE_BUTTON_BOTH';
-export const MOUSE_BUTTON_RIGHT = 'MOUSE_BUTTON_RIGHT';
+import MouseButton from './MouseButton';
 
 const CELL_NEIGHBORS = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
 
+// The game field is more or else dumb: it delegates cell click events to someone else for them to
+// explicitly call the reveal or revealAll methods.
 export default class GameField {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
+    private element: HTMLElement;
 
-        this.element = document.getElementById('game-field');
+    private revealedCellCount: number;
+    private cells: Cell[];
+
+    private onCellClick: (cell: Cell, mouseButton: MouseButton) => void = () => {};
+
+    constructor(private width: number, private height: number) {
+        this.element = document.getElementById('game-field') as HTMLElement;
 
         this.revealedCellCount = 0;
         this.cells = [];
@@ -23,14 +26,12 @@ export default class GameField {
             }
         }
 
-        this.onCellClick = () => {};
+        // "Active" cells are the ones getting highlighted hold both LMB and RMB when doing
+        // "mass reveal" (a purely visual effect).
 
-        const activeCells = [];
+        const activeCells: Cell[] = [];
 
-        let leftMouseButtonDown = false;
-        let rightMouseButtonDown = false;
-
-        const massRevealHold = (x, y) => {
+        const massRevealHold = (x: number, y: number) => {
             const cell = this.getCell(x, y);
 
             if (cell.hasMark()) {
@@ -51,73 +52,61 @@ export default class GameField {
         };
 
         const massRevealRelease = () => {
-            while (activeCells.length > 0) {
-                const cell = activeCells.pop();
+            for (const cell of activeCells) {
                 cell.element.classList.remove('active');
             }
+            activeCells.length = 0;
         };
+
+        // Mouse events handlers
+
+        let leftMouseButtonDown = false;
+        let rightMouseButtonDown = false;
 
         this.element.addEventListener('mousedown', (event) => {
             event.preventDefault();
 
-            if (event.which === 1) {
+            if (event.button == 0) {
                 leftMouseButtonDown = true;
-            } else if (event.which === 3) {
+            }
+            if (event.button == 2) {
                 rightMouseButtonDown = true;
             }
 
             if (
                 leftMouseButtonDown && rightMouseButtonDown &&
+                event.target instanceof HTMLElement &&
                 event.target.classList.contains('cell')
             ) {
-                const x = Number.parseInt(event.target.dataset.x);
-                const y = Number.parseInt(event.target.dataset.y);
+                const x = Number.parseInt(event.target.dataset.x!);
+                const y = Number.parseInt(event.target.dataset.y!);
                 massRevealHold(x, y);
-            }
-        });
-
-        this.element.addEventListener('mouseover', (event) => {
-            if (
-                leftMouseButtonDown && rightMouseButtonDown &&
-                event.target.classList.contains('cell')
-            ) {
-                massRevealRelease();
-
-                const x = Number.parseInt(event.target.dataset.x);
-                const y = Number.parseInt(event.target.dataset.y);
-                massRevealHold(x, y);
-            }
-        });
-
-        this.element.addEventListener('mouseleave', (event) => {
-            if (event.target === this.element) {
-                massRevealRelease();
-
-                leftMouseButtonDown = false;
-                rightMouseButtonDown = false;
             }
         });
 
         this.element.addEventListener('mouseup', (event) => {
-            if (event.which !== 1 && event.which !== 3) {
+            if (event.button != 0 && event.button != 2) {
                 return;
             }
 
             massRevealRelease();
 
-            let mouseButton = null;
+            let mouseButton: MouseButton | null = null;
             if (leftMouseButtonDown && rightMouseButtonDown) {
-                mouseButton = MOUSE_BUTTON_BOTH;
+                mouseButton = MouseButton.Both;
             } else if (leftMouseButtonDown) {
-                mouseButton = MOUSE_BUTTON_LEFT;
+                mouseButton = MouseButton.Left;
             } else if (rightMouseButtonDown) {
-                mouseButton = MOUSE_BUTTON_RIGHT;
+                mouseButton = MouseButton.Right;
             }
 
-            if (mouseButton !== null) {
-                if (event.target.classList.contains('cell')) {
-                    const x = Number.parseInt(event.target.dataset.x);
-                    const y = Number.parseInt(event.target.dataset.y);
+            if (mouseButton != null) {
+                if (
+                    event.target instanceof HTMLElement &&
+                    event.target.classList.contains('cell')
+                ) {
+                    const x = Number.parseInt(event.target.dataset.x!);
+                    const y = Number.parseInt(event.target.dataset.y!);
                     const cell = this.getCell(x, y);
                     this.onCellClick(cell, mouseButton);
                 }
@@ -127,28 +116,60 @@ export default class GameField {
             rightMouseButtonDown = false;
         });
 
+        this.element.addEventListener('mouseover', (event) => {
+            if (
+                leftMouseButtonDown && rightMouseButtonDown &&
+                event.target instanceof HTMLElement &&
+                event.target.classList.contains('cell')
+            ) {
+                massRevealRelease();
+
+                const x = Number.parseInt(event.target.dataset.x!);
+                const y = Number.parseInt(event.target.dataset.y!);
+                massRevealHold(x, y);
+            }
+        });
+
+        this.element.addEventListener('mouseleave', (event) => {
+            if (event.target == this.element) {
+                massRevealRelease();
+
+                leftMouseButtonDown = false;
+                rightMouseButtonDown = false;
+            }
+        });
+
         this.element.addEventListener('contextmenu', (event) => {
             event.preventDefault();
         });
     }
 
-    set onCellMarkChange(callback) {
+    set onCellMarkChange(callback: (cell: Cell, mark: string) => void) {
         for (const cell of this.cells) {
             cell.onMarkChange = callback;
         }
     }
 
-    set onCellReveal(callback) {
+    set onCellReveal(callback: (cell: Cell) => void) {
         for (const cell of this.cells) {
             cell.onReveal = callback;
         }
     }
 
-    getCell(x, y) {
-        return this.cells[y * this.width + x];
+    getCell(x: number, y: number): Cell {
+        const cell = this.cells[y * this.width + x];
+        if (cell == undefined) {
+            throw new Error('Cell coordinatesa are out of bounds.');
+        }
+
+        return cell;
     }
 
-    *getNeighbors(cell) {
+    cellIndex(cell: Cell): number {
+        return cell.y * this.width + cell.x;
+    }
+
+    *getNeighbors(cell: Cell): Generator<Cell> {
         for (const [dx, dy] of CELL_NEIGHBORS) {
             if (
                 cell.x + dx < 0 || cell.x + dx >= this.width ||
@@ -161,7 +182,13 @@ export default class GameField {
         }
     }
 
-    fillWithMines(mineCount) {
+    fillWithMines(mineCount: number) {
+        if (mineCount > this.width * this.height) {
+            throw new Error('Too many mines for the current game field size.');
+        }
+
+        // Cell indices where the mines could be placed.
+        // Initially filled with every single cell index.
         const mineCandidates = [];
         for (let i = 0; i < this.width * this.height; i += 1) {
             mineCandidates.push(i);
@@ -170,7 +197,7 @@ export default class GameField {
         for (let i = 0; i < mineCount; i += 1) {
             let candidateIndex = Math.floor(Math.random() * mineCandidates.length);
 
-            const cell = this.cells[mineCandidates[candidateIndex]];
+            const cell = this.cells[mineCandidates[candidateIndex]!]!;
             cell.hasMine = true;
 
             for (const neighborCell of this.getNeighbors(cell)) {
@@ -186,7 +213,7 @@ export default class GameField {
         }
     }
 
-    reveal(x, y) {
+    reveal(x: number, y: number) {
         const revealedCell = this.getCell(x, y);
         if (revealedCell.revealed) {
             return;
@@ -197,31 +224,32 @@ export default class GameField {
             revealedCell.animateReveal();
             this.revealedCellCount += 1;
         } else {
-            for (const cell of this.cells) {
-                delete cell.visited;
-                delete cell.depth;
-            }
+            type CellIndex = number;
+            const cellsVisited = new Set<CellIndex>();
+            const cellsDepth = new Map<CellIndex, number>();
 
             const cellsToVisit = [revealedCell];
-            revealedCell.depth = 0;
-
+            cellsDepth.set(this.cellIndex(revealedCell), 0);
             let currentDepth = 0;
 
             while (cellsToVisit.length > 0) {
                 const depthLayerSize = cellsToVisit.length;
 
                 for (let i = 0; i < depthLayerSize; i += 1) {
-                    const nextCell = cellsToVisit.shift();
+                    const nextCell = cellsToVisit.shift()!;
                     nextCell.reveal();
                     this.revealedCellCount += 1;
 
-                    nextCell.animateReveal(Math.min(nextCell.depth, 100) * 15);
+                    const nextCellDepth = cellsDepth.get(this.cellIndex(nextCell))!;
+                    nextCell.animateReveal(Math.min(nextCellDepth, 100) * 15);
 
-                    if (nextCell.neighborMineCount === 0) {
+                    if (nextCell.neighborMineCount == 0) {
                         for (const neighborCell of this.getNeighbors(nextCell)) {
-                            if (!neighborCell.visited && !neighborCell.revealed) {
-                                neighborCell.visited = true;
-                                neighborCell.depth = currentDepth + 1;
+                            const neighborCellIndex = this.cellIndex(neighborCell);
+
+                            if (!cellsVisited.has(neighborCellIndex) && !neighborCell.revealed) {
+                                cellsVisited.add(neighborCellIndex);
+                                cellsDepth.set(neighborCellIndex, currentDepth + 1);
                                 cellsToVisit.push(neighborCell);
                             }
                         }

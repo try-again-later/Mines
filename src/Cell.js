@@ -35,10 +35,10 @@ export default class Cell {
         this.y = y;
 
         this.revealed = false;
-        this.onReveal = () => {};
+        this.onReveal = (cell) => {};
 
         this.mark = null;
-        this.onMarkChange = () => {};
+        this.onMarkChange = (cell, mark) => {};
 
         this.neighborMineCount = 0;
         this.hasMine = false;

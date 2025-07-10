@@ -1,9 +1,7 @@
 import Timer from './Timer';
-import GameField, {
-    MOUSE_BUTTON_LEFT,
-    MOUSE_BUTTON_RIGHT,
-    MOUSE_BUTTON_BOTH,
-} from './GameField';
+import GameField from './GameField';
+import MouseButton from './MouseButton';
+
 import {
     CELL_FLAG_MARK,
     CELL_QUESTION_MARK,
@@ -64,15 +62,15 @@ export default class Game {
 
         this.gameField.onCellClick = (cell, mouseButton) => {
             switch (mouseButton) {
-                case MOUSE_BUTTON_LEFT: {
+                case MouseButton.Left: {
                     this.leftMouseButtonClick(cell);
                 } break;
 
-                case MOUSE_BUTTON_RIGHT: {
+                case MouseButton.Right: {
                     this.rightMouseButtonClick(cell);
                 } break;
 
-                case MOUSE_BUTTON_BOTH: {
+                case MouseButton.Both: {
                     this.bothMouseButtonsClick(cell);
                 } break;
             }
