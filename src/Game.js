@@ -1,13 +1,7 @@
 import Timer from './Timer';
 import GameField from './GameField';
 import MouseButton from './MouseButton';
-
-import {
-    CELL_FLAG_MARK,
-    CELL_QUESTION_MARK,
-    createSpriteElement,
-    SPRITE_MINE_EXPLOSION,
-} from './Cell';
+import { CellMark } from './Cell';
 
 const GAME_STATE_START = 'GAME_STATE_START';
 const GAME_STATE_IN_PROGRESS = 'GAME_STATE_IN_PROGRESS'
@@ -43,16 +37,16 @@ export default class Game {
         this.gameField.fillWithMines(this.mineCount);
 
         this.gameField.onCellMarkChange = (cell, newMark) => {
-            if (cell.mark === CELL_FLAG_MARK) {
+            if (cell.mark === CellMark.Flag) {
                 this.setMinesLeft(this.minesLeft + 1);
             }
-            if (newMark === CELL_FLAG_MARK) {
+            if (newMark === CellMark.Flag) {
                 this.setMinesLeft(this.minesLeft - 1);
             }
         };
 
         this.gameField.onCellReveal = (cell) => {
-            if (cell.mark === CELL_FLAG_MARK && !cell.hasMine) {
+            if (cell.mark === CellMark.Flag && !cell.hasMine) {
                 this.setMinesLeft(this.minesLeft + 1);
             }
             if (cell.mark === null && cell.hasMine) {
@@ -102,11 +96,7 @@ export default class Game {
             this.timer.stop();
             this.gameField.revealAll();
             for (const cell of this.gameField.cells) {
-                if (cell.hasMine) {
-                    cell.spriteElement?.remove();
-                    cell.contentElement.appendChild(createSpriteElement(SPRITE_MINE_EXPLOSION));
-                    cell.spriteElement = cell.contentElement.lastElementChild;
-                }
+                cell.explode();
             }
         }
     }
@@ -123,9 +113,9 @@ export default class Game {
     rightMouseButtonClick(cell) {
         if (!cell.revealed) {
             if (!cell.hasMark()) {
-                cell.addMark(CELL_FLAG_MARK);
-            } else if (cell.mark === CELL_FLAG_MARK) {
-                cell.addMark(CELL_QUESTION_MARK);
+                cell.addMark(CellMark.Flag);
+            } else if (cell.mark === CellMark.Flag) {
+                cell.addMark(CellMark.QuestionMark);
             } else {
                 cell.removeMark();
             }
@@ -138,14 +128,14 @@ export default class Game {
         } else {
             let flaggedNeighbors = 0;
             for (const neighborCell of this.gameField.getNeighbors(cell)) {
-                if (neighborCell.mark === CELL_FLAG_MARK) {
+                if (neighborCell.mark === CellMark.Flag) {
                     flaggedNeighbors += 1;
                 }
             }
 
             if (flaggedNeighbors === cell.neighborMineCount) {
                 for (const neighborCell of this.gameField.getNeighbors(cell)) {
-                    if (!neighborCell.revealed && neighborCell.mark !== CELL_FLAG_MARK) {
+                    if (!neighborCell.revealed && neighborCell.mark !== CellMark.Flag) {
                         this.reveal(neighborCell);
                     }
                 }

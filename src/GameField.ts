@@ -1,7 +1,9 @@
-import Cell from './Cell';
+import { Cell } from './Cell';
+import type { OnCellRevealCallback, OnCellMarkChangeCallback } from './Cell';
 import MouseButton from './MouseButton';
 
-const CELL_NEIGHBORS = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+const CELL_NEIGHBORS =
+    [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]] as const;
 
 // The game field is more or else dumb: it delegates cell click events to someone else for them to
 // explicitly call the reveal or revealAll methods.
@@ -13,7 +15,10 @@ export default class GameField {
 
     private onCellClick: (cell: Cell, mouseButton: MouseButton) => void = () => {};
 
-    constructor(private width: number, private height: number) {
+    constructor(
+        private width: number,
+        private height: number,
+    ) {
         this.element = document.getElementById('game-field') as HTMLElement;
 
         this.revealedCellCount = 0;
@@ -144,13 +149,13 @@ export default class GameField {
         });
     }
 
-    set onCellMarkChange(callback: (cell: Cell, mark: string) => void) {
+    set onCellMarkChange(callback: OnCellMarkChangeCallback) {
         for (const cell of this.cells) {
             cell.onMarkChange = callback;
         }
     }
 
-    set onCellReveal(callback: (cell: Cell) => void) {
+    set onCellReveal(callback: OnCellRevealCallback) {
         for (const cell of this.cells) {
             cell.onReveal = callback;
         }
@@ -209,7 +214,7 @@ export default class GameField {
         }
 
         for (const cell of this.cells) {
-            cell.addSprite();
+            cell.refreshSprite();
         }
     }
 
