@@ -71,6 +71,8 @@ export class Cell {
     private _element: HTMLElement;
     private contentElement: HTMLElement;
     private coverElement: HTMLElement;
+
+    private markElement: SVGElement | null;
     private spriteElement: SVGElement | null;
 
     constructor(
@@ -90,7 +92,9 @@ export class Cell {
         this.coverElement.classList.add('cell-cover');
         this.contentElement.appendChild(this.coverElement);
 
-        // flag / question mark / mine / explosion / number of neighboring cells with a mine
+        // flag / question mark
+        this.markElement = null;
+        // mine / explosion / number of neighboring cells with a mine
         this.spriteElement = null;
     }
 
@@ -128,19 +132,19 @@ export class Cell {
         }
 
         this._mark = mark;
-        this.spriteElement?.remove();
+        this.markElement?.remove();
 
         switch (mark) {
             case CellMark.Flag: {
                 const spriteId = cellSpriteId(CellSprite.Flag);
                 this.coverElement.appendChild(createSpriteElement(spriteId));
-                this.spriteElement = this.coverElement.lastElementChild as SVGElement;
+                this.markElement = this.coverElement.lastElementChild as SVGElement;
             } break;
 
             case CellMark.QuestionMark: {
                 const spriteId = cellSpriteId(CellSprite.QuestionMark);
                 this.coverElement.appendChild(createSpriteElement(spriteId));
-                this.spriteElement = this.coverElement.lastElementChild as SVGElement;
+                this.markElement = this.coverElement.lastElementChild as SVGElement;
             } break;
         }
     }
@@ -155,7 +159,7 @@ export class Cell {
         }
 
         this._mark = null;
-        this.spriteElement?.remove();
+        this.markElement?.remove();
     }
 
     reveal() {
@@ -238,6 +242,7 @@ export class Cell {
 
         this.element.classList.remove('revealed');
         this.spriteElement?.remove();
+        this.markElement?.remove();
 
         this._revealed = false;
         this._mark = null;
