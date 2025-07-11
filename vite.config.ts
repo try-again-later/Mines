@@ -1,10 +1,10 @@
-import { defineConfig } from 'vite';
+import type { UserConfig } from 'vite';
 
-export default defineConfig({
+export default {
     base: '/Mines/',
     root: 'src',
     publicDir: '../public',
     build: {
         outDir: '../dist',
     },
-});
+} satisfies UserConfig;

@@ -5,23 +5,25 @@ import MouseButton from './MouseButton';
 const CELL_NEIGHBORS =
     [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]] as const;
 
+export type OnCellClickCallback = (cell: Cell, mouseButton: MouseButton) => void;
+
 // The game field is more or else dumb: it delegates cell click events to someone else for them to
 // explicitly call the reveal or revealAll methods.
 export default class GameField {
     private element: HTMLElement;
 
-    private revealedCellCount: number;
-    private cells: Cell[];
+    private _revealedCellCount: number;
+    public readonly cells: Cell[];
 
-    private onCellClick: (cell: Cell, mouseButton: MouseButton) => void = () => {};
+    private _onCellClick: OnCellClickCallback = () => {};
 
     constructor(
-        private width: number,
-        private height: number,
+        public readonly width: number,
+        public readonly height: number,
     ) {
         this.element = document.getElementById('game-field') as HTMLElement;
 
-        this.revealedCellCount = 0;
+        this._revealedCellCount = 0;
         this.cells = [];
         for (let y = 0; y < this.height; y += 1) {
             for (let x = 0; x < this.width; x += 1) {
@@ -79,7 +81,8 @@ export default class GameField {
             }
 
             if (
-                leftMouseButtonDown && rightMouseButtonDown &&
+                leftMouseButtonDown &&
+                rightMouseButtonDown &&
                 event.target instanceof HTMLElement &&
                 event.target.classList.contains('cell')
             ) {
@@ -113,7 +116,7 @@ export default class GameField {
                     const x = Number.parseInt(event.target.dataset.x!);
                     const y = Number.parseInt(event.target.dataset.y!);
                     const cell = this.getCell(x, y);
-                    this.onCellClick(cell, mouseButton);
+                    this._onCellClick(cell, mouseButton);
                 }
             }
 
@@ -123,7 +126,8 @@ export default class GameField {
 
         this.element.addEventListener('mouseover', (event) => {
             if (
-                leftMouseButtonDown && rightMouseButtonDown &&
+                leftMouseButtonDown &&
+                rightMouseButtonDown &&
                 event.target instanceof HTMLElement &&
                 event.target.classList.contains('cell')
             ) {
@@ -149,6 +153,10 @@ export default class GameField {
         });
     }
 
+    get revealedCellCount() {
+        return this._revealedCellCount;
+    }
+
     set onCellMarkChange(callback: OnCellMarkChangeCallback) {
         for (const cell of this.cells) {
             cell.onMarkChange = callback;
@@ -159,6 +167,10 @@ export default class GameField {
         for (const cell of this.cells) {
             cell.onReveal = callback;
         }
+    }
+
+    set onCellClick(callback: OnCellClickCallback) {
+        this._onCellClick = callback;
     }
 
     getCell(x: number, y: number): Cell {
@@ -177,8 +189,10 @@ export default class GameField {
     *getNeighbors(cell: Cell): Generator<Cell> {
         for (const [dx, dy] of CELL_NEIGHBORS) {
             if (
-                cell.x + dx < 0 || cell.x + dx >= this.width ||
-                cell.y + dy < 0 || cell.y + dy >= this.height
+                cell.x + dx < 0 ||
+                cell.x + dx >= this.width ||
+                cell.y + dy < 0 ||
+                cell.y + dy >= this.height
             ) {
                 continue;
             }
@@ -227,7 +241,7 @@ export default class GameField {
         if (revealedCell.hasMine || revealedCell.neighborMineCount > 0) {
             revealedCell.reveal();
             revealedCell.animateReveal();
-            this.revealedCellCount += 1;
+            this._revealedCellCount += 1;
         } else {
             type CellIndex = number;
             const cellsVisited = new Set<CellIndex>();
@@ -243,7 +257,7 @@ export default class GameField {
                 for (let i = 0; i < depthLayerSize; i += 1) {
                     const nextCell = cellsToVisit.shift()!;
                     nextCell.reveal();
-                    this.revealedCellCount += 1;
+                    this._revealedCellCount += 1;
 
                     const nextCellDepth = cellsDepth.get(this.cellIndex(nextCell))!;
                     nextCell.animateReveal(Math.min(nextCellDepth, 100) * 15);
@@ -273,13 +287,13 @@ export default class GameField {
             }
             cell.reveal();
         }
-        this.revealedCellCount = this.width * this.height;
+        this._revealedCellCount = this.width * this.height;
     }
 
     reset() {
         for (const cell of this.cells) {
             cell.reset();
         }
-        this.revealedCellCount = 0;
+        this._revealedCellCount = 0;
     }
 }

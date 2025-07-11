@@ -1,23 +1,39 @@
 import Timer from './Timer';
+import type { OnCellClickCallback } from './GameField';
 import GameField from './GameField';
 import MouseButton from './MouseButton';
-import { CellMark } from './Cell';
+import { Cell, CellMark } from './Cell';
 
-const GAME_STATE_START = 'GAME_STATE_START';
-const GAME_STATE_IN_PROGRESS = 'GAME_STATE_IN_PROGRESS'
-const GAME_STATE_WIN = 'GAME_STATE_WIN'
-const GAME_STATE_LOSE = 'GAME_STATE_LOSE';
+const enum GameState {
+    Start,
+    InProgress,
+    Win,
+    Lose,
+}
 
 export default class Game {
+    private state: GameState;
+
+    private width: number;
+    private height: number;
+    private mineCount: number;
+    private minesLeft: number;
+
+    private minesLeftElement: HTMLElement;
+
+    private timer: Timer;
+    private gameField: GameField;
+
     constructor() {
-        this.state = GAME_STATE_START;
+        this.state = GameState.Start;
         this.width = 16;
         this.height = 16;
         this.mineCount = 30;
+        this.minesLeft = this.mineCount;
 
-        const difficultySelectionElement = document.getElementById('difficulty-selection');
+        const difficultySelectionElement = document.getElementById('difficulty-selection')!;
         let difficultySelectionVisisble = false;
-        document.getElementById('difficulty-selection-button').addEventListener('click', () => {
+        document.getElementById('difficulty-selection-button')!.addEventListener('click', () => {
             if (difficultySelectionVisisble) {
                 difficultySelectionElement.style.display = 'none';
                 difficultySelectionVisisble = false;
@@ -27,11 +43,10 @@ export default class Game {
             }
         });
 
-        this.minesLeftElement = document.getElementById('mines-left');
+        this.minesLeftElement = document.getElementById('mines-left')!;
         this.setMinesLeft(this.mineCount);
 
-        const timerElement = document.getElementById('game-timer');
-        this.timer = new Timer(timerElement);
+        this.timer = new Timer(document.getElementById('game-timer')!);
 
         this.gameField = new GameField(this.width, this.height);
         this.gameField.fillWithMines(this.mineCount);
@@ -71,15 +86,15 @@ export default class Game {
         };
     }
 
-    setMinesLeft(minesLeft) {
+    setMinesLeft(minesLeft: number) {
         this.minesLeft = minesLeft;
-        this.minesLeftElement.textContent = minesLeft;
+        this.minesLeftElement.textContent = minesLeft.toString();
     }
 
-    reveal(cell) {
-        if (this.state === GAME_STATE_START) {
+    reveal(cell: Cell) {
+        if (this.state === GameState.Start) {
             this.timer.start();
-            this.state = GAME_STATE_IN_PROGRESS;
+            this.state = GameState.InProgress;
         }
 
         if (!cell.hasMine) {
@@ -87,12 +102,12 @@ export default class Game {
 
             const totalCellCount = this.gameField.width * this.gameField.height;
             if (this.gameField.revealedCellCount + this.mineCount === totalCellCount) {
-                this.state = GAME_STATE_WIN;
+                this.state = GameState.Win;
                 this.timer.stop();
                 this.gameField.revealAll();
             }
         } else {
-            this.state = GAME_STATE_LOSE;
+            this.state = GameState.Lose;
             this.timer.stop();
             this.gameField.revealAll();
             for (const cell of this.gameField.cells) {
@@ -101,7 +116,7 @@ export default class Game {
         }
     }
 
-    leftMouseButtonClick(cell) {
+    leftMouseButtonClick(cell: Cell) {
         if (!cell.revealed) {
             if (cell.hasMark()) {
                 return;
@@ -110,7 +125,7 @@ export default class Game {
         }
     }
 
-    rightMouseButtonClick(cell) {
+    rightMouseButtonClick(cell: Cell) {
         if (!cell.revealed) {
             if (!cell.hasMark()) {
                 cell.addMark(CellMark.Flag);
@@ -122,7 +137,7 @@ export default class Game {
         }
     }
 
-    bothMouseButtonsClick(cell) {
+    bothMouseButtonsClick(cell: Cell) {
         if (!cell.revealed) {
             this.leftMouseButtonClick(cell);
         } else {
@@ -149,7 +164,7 @@ export default class Game {
 
         this.timer.reset();
 
-        this.state = GAME_STATE_START;
+        this.state = GameState.Start;
         this.setMinesLeft(this.mineCount);
     }
 }
