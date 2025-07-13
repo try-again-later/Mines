@@ -26,47 +26,47 @@
                         </svg>
                     </button>
 
-                    <div class="difficulty-selection-popup" id="difficulty-selection">
+                    <div class="difficulty-selection-popup cloak" id="difficulty-selection">
                         <p class="difficulty-selection-heading">Difficulty selection</p>
 
                         <label class="difficulty-option">
                             Easy
-                            <input checked type="radio" name="difficulty" value="easy" />
+                            <input type="radio" name="difficulty" value="easy" data-difficulty-input />
                         </label>
 
                         <label class="difficulty-option">
                             Medium
-                            <input type="radio" name="difficulty" value="medium" />
+                            <input type="radio" name="difficulty" value="medium" data-difficulty-input />
                         </label>
 
                         <label class="difficulty-option">
                             Hard
-                            <input type="radio" name="difficulty" value="hard" />
+                            <input type="radio" name="difficulty" value="hard" data-difficulty-input />
                         </label>
 
                         <hr />
 
                         <label class="difficulty-option">
                             Custom
-                            <input type="radio" name="difficulty" value="custom" />
+                            <input type="radio" name="difficulty" value="custom" data-difficulty-input />
                         </label>
 
                         <fieldset class="difficulty-selection-custom-options">
                             <legend>Custom settings</legend>
 
                             <label for="custom-field-width">Width</label>
-                            <input disabled type="number" name="width" id="custom-field-width" value="10" min="1" max="100" />
+                            <input disabled type="number" name="width" id="custom-field-width" value="10" min="1" max="100" data-custom-difficulty-settings />
 
                             <label for="custom-field-height">Height</label>
-                            <input disabled type="number" name="height" id="custom-field-height" value="10" min="1" max="100" />
+                            <input disabled type="number" name="height" id="custom-field-height" value="10" min="1" max="100" data-custom-difficulty-settings />
 
                             <label for="custom-mine-count">Mines</label>
-                            <input disabled type="number" name="mines" id="custom-mine-count" value="10" min="1" max="10000" />
+                            <input disabled type="number" name="mines" id="custom-mine-count" value="10" min="1" max="10000" data-custom-difficulty-settings />
                         </fieldset>
 
                         <div class="difficulty-selection-buttons-block">
-                            <button class="secondary-button">Confirm</button>
-                            <button class="secondary-button">Cancel</button>
+                            <button class="secondary-button" data-confirm>Confirm</button>
+                            <button class="secondary-button" data-cancel>Cancel</button>
                         </div>
                     </div>
                 </div>

@@ -1,8 +1,8 @@
 import Timer from './Timer';
-import type { OnCellClickCallback } from './GameField';
 import GameField from './GameField';
 import MouseButton from './MouseButton';
 import { Cell, CellMark } from './Cell';
+import DifficultySelection from './DifficultySelection';
 
 const enum GameState {
     Start,
@@ -26,22 +26,10 @@ export default class Game {
 
     constructor() {
         this.state = GameState.Start;
-        this.width = 16;
-        this.height = 16;
-        this.mineCount = 30;
+        this.width = 9;
+        this.height = 9;
+        this.mineCount = 10;
         this.minesLeft = this.mineCount;
-
-        const difficultySelectionElement = document.getElementById('difficulty-selection')!;
-        let difficultySelectionVisisble = false;
-        document.getElementById('difficulty-selection-button')!.addEventListener('click', () => {
-            if (difficultySelectionVisisble) {
-                difficultySelectionElement.style.display = 'none';
-                difficultySelectionVisisble = false;
-            } else {
-                difficultySelectionElement.style.display = 'block';
-                difficultySelectionVisisble = true;
-            }
-        });
 
         this.minesLeftElement = document.getElementById('mines-left')!;
         this.setMinesLeft(this.mineCount);
@@ -83,6 +71,15 @@ export default class Game {
                     this.bothMouseButtonsClick(cell);
                 } break;
             }
+        };
+
+        const difficultySelection = new DifficultySelection();
+        difficultySelection.onDifficultyChange = (width, height, mineCount) => {
+            this.width = width;
+            this.height = height;
+            this.mineCount = mineCount;
+            this.gameField.setSize(width, height);
+            this.reset();
         };
     }
 

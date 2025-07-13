@@ -1,4 +1,5 @@
 const defaultTimerConfig = {
+    // How many times per second is the textContent of the timer element getting updated.
     fps: 30,
 } as const;
 
@@ -34,7 +35,6 @@ export default class Timer {
             let lastFrameTimestamp = 0;
 
             const frameCallback: FrameRequestCallback = (timestamp) => {
-                // Update the timer textContent 24 times per second
                 if (timestamp - lastFrameTimestamp > 1000 / this.fps) {
                     lastFrameTimestamp = timestamp;
 

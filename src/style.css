@@ -26,6 +26,10 @@ fieldset {
     border: 1px solid #aaa;
 }
 
+.cloak {
+    visibility: hidden !important;
+}
+
 /* Primary button */
 
 .primary-button {
@@ -38,6 +42,9 @@ fieldset {
     border-radius: 0.25rem;
     border: 2px solid #334155;
 
+    transition:
+        transform 75ms,
+        background-color 75ms;
     color: #334155;
     background-color: transparent;
     cursor: pointer;
@@ -51,7 +58,7 @@ fieldset {
 .primary-button:active {
     background-color: #1e293b;
     border-color: #1e293b;
-    transform: scale(0.95);
+    transform: scale(0.9);
 }
 
 .primary-button-icon {
@@ -74,6 +81,7 @@ fieldset {
     border: none;
     border-radius: 0.25rem;
 
+    transition: background-color 125ms;
     background-color: #e5e5e5;
     color: #1e293b;
     cursor: pointer;
@@ -99,7 +107,6 @@ fieldset {
     box-sizing: border-box;
     position: absolute;
     z-index: 1;
-    display: none;
 
     left: -60%;
     width: 220%;
@@ -114,6 +121,15 @@ fieldset {
     box-shadow:
         0px 4px 8px 0px rgba(0, 0, 0, 0.2),
         0px 0px 4px 0px rgba(0, 0, 0, 0.05);
+
+    transform-origin: 50% 0%;
+    animation-name: popup-disappear;
+    animation-duration: 150ms;
+    animation-fill-mode: forwards;
+}
+
+.difficulty-selection-popup--visible {
+    animation-name: popup-appear;
 }
 
 @media (max-width: 20rem) {
@@ -121,6 +137,32 @@ fieldset {
         position: fixed;
         left: 5%;
         width: 90%;
+    }
+}
+
+@keyframes popup-appear {
+    0% {
+        visibility: hidden;
+        opacity: 0;
+        translate: 0 -1rem;
+    }
+
+    100% {
+        visibility: visible;
+        opacity: 1;
+        translate: none;
+    }
+}
+
+@keyframes popup-disappear {
+    0% {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    100% {
+        visibility: hidden;
+        opacity: 0;
     }
 }
 
@@ -256,6 +298,7 @@ fieldset {
 
     background-color: #334155;
 
+    transition: background-color 100ms;
     pointer-events: none;
     will-change: opacity, transform;
 }

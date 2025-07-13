@@ -15,18 +15,22 @@ export default class GameField {
     private _revealedCellCount: number;
     public readonly cells: Cell[];
 
-    private _onCellClick: OnCellClickCallback = () => {};
+    private _onCellClick: OnCellClickCallback = (() => {});
+    private _onCellReveal: OnCellRevealCallback = (() => {});
+    private _onCellMarkChange: OnCellMarkChangeCallback = (() => {});
 
     constructor(
-        public readonly width: number,
-        public readonly height: number,
+        private _width: number,
+        private _height: number,
     ) {
         this.element = document.getElementById('game-field') as HTMLElement;
+        this.element.style.setProperty('--game-field-width', _width.toString());
+        this.element.style.setProperty('--game-field-height', _height.toString());
 
         this._revealedCellCount = 0;
         this.cells = [];
-        for (let y = 0; y < this.height; y += 1) {
-            for (let x = 0; x < this.width; x += 1) {
+        for (let y = 0; y < this._height; y += 1) {
+            for (let x = 0; x < this._width; x += 1) {
                 const cell = new Cell(x, y);
                 this.cells.push(cell);
                 this.element.appendChild(cell.element);
@@ -153,17 +157,27 @@ export default class GameField {
         });
     }
 
+    get width() {
+        return this._width;
+    }
+
+    get height() {
+        return this._height;
+    }
+
     get revealedCellCount() {
         return this._revealedCellCount;
     }
 
     set onCellMarkChange(callback: OnCellMarkChangeCallback) {
+        this._onCellMarkChange = callback;
         for (const cell of this.cells) {
             cell.onMarkChange = callback;
         }
     }
 
     set onCellReveal(callback: OnCellRevealCallback) {
+        this._onCellReveal = callback;
         for (const cell of this.cells) {
             cell.onReveal = callback;
         }
@@ -174,7 +188,7 @@ export default class GameField {
     }
 
     getCell(x: number, y: number): Cell {
-        const cell = this.cells[y * this.width + x];
+        const cell = this.cells[y * this._width + x];
         if (cell == undefined) {
             throw new Error('Cell coordinatesa are out of bounds.');
         }
@@ -183,16 +197,16 @@ export default class GameField {
     }
 
     cellIndex(cell: Cell): number {
-        return cell.y * this.width + cell.x;
+        return cell.y * this._width + cell.x;
     }
 
     *getNeighbors(cell: Cell): Generator<Cell> {
         for (const [dx, dy] of CELL_NEIGHBORS) {
             if (
                 cell.x + dx < 0 ||
-                cell.x + dx >= this.width ||
+                cell.x + dx >= this._width ||
                 cell.y + dy < 0 ||
-                cell.y + dy >= this.height
+                cell.y + dy >= this._height
             ) {
                 continue;
             }
@@ -202,14 +216,14 @@ export default class GameField {
     }
 
     fillWithMines(mineCount: number) {
-        if (mineCount > this.width * this.height) {
+        if (mineCount > this._width * this._height) {
             throw new Error('Too many mines for the current game field size.');
         }
 
         // Cell indices where the mines could be placed.
         // Initially filled with every single cell index.
         const mineCandidates = [];
-        for (let i = 0; i < this.width * this.height; i += 1) {
+        for (let i = 0; i < this._width * this._height; i += 1) {
             mineCandidates.push(i);
         }
 
@@ -287,7 +301,7 @@ export default class GameField {
             }
             cell.reveal();
         }
-        this._revealedCellCount = this.width * this.height;
+        this._revealedCellCount = this._width * this._height;
     }
 
     reset() {
@@ -295,5 +309,28 @@ export default class GameField {
             cell.reset();
         }
         this._revealedCellCount = 0;
+    }
+
+    setSize(width: number, height: number) {
+        this._width = width;
+        this._height = height;
+        this.element.style.setProperty('--game-field-width', this._width.toString());
+        this.element.style.setProperty('--game-field-height', this._height.toString());
+
+        for (const cell of this.cells) {
+            cell.element.remove();
+        }
+
+        this._revealedCellCount = 0;
+        this.cells.splice(0, this.cells.length);
+        for (let y = 0; y < this._height; y += 1) {
+            for (let x = 0; x < this._width; x += 1) {
+                const cell = new Cell(x, y);
+                this.cells.push(cell);
+                cell.onMarkChange = this._onCellMarkChange;
+                cell.onReveal = this._onCellReveal;
+                this.element.appendChild(cell.element);
+            }
+        }
     }
 }
